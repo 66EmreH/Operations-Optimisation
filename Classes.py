@@ -11,9 +11,9 @@ class Flight:
         self.aircraft_size = aircraft_size #Size of the aircraft classified as B,C,D,E,F
         self.entity = entity #Entities of the flight (passengers or cargo)
         self.arrival_time = arrival_time #Arrival time of the flight
-        self.arrival_destination = arrival_destination #Arrival destination of the flight
+        self.arrival_destination = arrival_destination #Arrival destination of the flight (domestic or international)
         self.departure_time = departure_time #Departure time of the flight
-        self.departure_destination = departure_destination #Departure destination of the flight
+        self.departure_destination = departure_destination #Departure destination of the flight (domestic or international)
         self.airline = airline #Airline operating the flight
 
 
