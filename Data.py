@@ -255,7 +255,9 @@ def plot_gate_distributions(gates):
     size_values = [size_counts[s] for s in size_labels]
 
     plt.figure()
-    plt.pie(size_labels, size_values)
+    plt.bar(size_labels, size_values)
+    plt.xlabel("Gate size class")
+    plt.ylabel("Number of gates")
     plt.title("Gate size distribution")
     plt.show()
 
