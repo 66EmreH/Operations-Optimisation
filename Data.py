@@ -1,5 +1,5 @@
 import numpy as np
-from Classes import Flight
+from Classes import Flight, Gate
 import matplotlib.pyplot as plt
 from collections import Counter
 
@@ -7,12 +7,12 @@ from collections import Counter
 #-------------------------------------------------------------------------------------------
 #Set the parameters of the data, such as distribution of domestic/int etc...
 Flight_Distribution = {
-    # Domestic 
+    #Domestic 
     "p_domestic_arrival":   0.85,
     "p_domestic_departure": 0.85,
-    # Passenger vs Cargo
+    #Passenger vs Cargo
     "p_passenger": 0.95,
-    # Aircraft size distribution
+    #Aircraft size distribution
     "aircraft_size_probs": {
         "B": 0.10,
         "C": 0.55,
@@ -20,7 +20,7 @@ Flight_Distribution = {
         "E": 0.10,
         "F": 0.05,
     },
-    # Airline distribution 
+    #Airline distribution 
     "airline_probs": {
         "CZ": 0.50,
         "ZH": 0.10,
@@ -42,17 +42,14 @@ Gate_distribution = {
         "E": 0.25,
         "F": 0.05,
     },
-
     #Gate entitity
     "gate_pax": 0.75,
-
     #Terminal proximity
     "terminal_proximity": {
         "Domestic": 0.5,
         "International": 0.4,
         "Convertible": 0.10,
     },
-
     #Gates att apron (237 total) MENTION SIMPLIFICATION THAT THERE IS NO CORRELATION APPRON AND TYPE OF GATE
     "Appron_gates": {
         "1": 8,
@@ -77,14 +74,13 @@ Gate_distribution = {
 }
 
 #-------------------------------------------------------------------------------------------
-#sample randomly
+#Function to sample randomly
 def _sample_from_dict(rng, prob_dict, n):
     labels = list(prob_dict.keys())
     probs  = np.array(list(prob_dict.values()), dtype=float)
     probs /= probs.sum()
     return rng.choice(labels, size=n, p=probs)
 
-#-------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------
 #Flight generator
 #We do this by making a list of aircraft sizes randomly, and attributing it to the flight with the same rank
@@ -128,10 +124,57 @@ def generate_flights(n_flights: int,cfg: dict | None = None,seed: int | None = 4
 flights = generate_flights(1200)
 
 #-------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------
+#Gate generator, uses seed of 42 if None is given, total = 237 
+def generate_gates(cfg: dict | None = None, seed: int | None = 42,
+                   expected_total: int | None = 237, strict_total: bool = False):
+    
+    #If no other config is given, use dict from Guanghzou
+    if cfg is None:
+        cfg = Gate_distribution
+
+    #set rng, and get gates per apron
+    rng = np.random.default_rng(seed)
+    apron_counts = cfg["Appron_gates"]
+
+    #Count total gates, check if it is equal to expected total
+    total_gates = sum(apron_counts.values())
+    if expected_total is not None and total_gates != expected_total:
+        msg = f"Gate distribution adds to {total_gates} gates (expected {expected_total})."
+        if strict_total:
+            raise ValueError(msg)
+        print(f"Warning: {msg}")
+
+    #Get sample distribution
+    gate_sizes = _sample_from_dict(rng, cfg["gate_size"], total_gates)
+    terminal_types = _sample_from_dict(rng, cfg["terminal_proximity"], total_gates)
+    entities = np.where(rng.random(total_gates) < cfg["gate_pax"], "passenger", "cargo")
+
+    #Start of generation, loop over approns, and loop over corridors(gates) in each apron
+    gates = []
+    cursor = 0
+    for apron, count in apron_counts.items():
+        for corridor in range(1, count + 1):
+            gate = Gate(
+                terminal_proximity=terminal_types[cursor].lower(),
+                gate_size=gate_sizes[cursor],
+                entity=entities[cursor],
+                apron=str(apron),
+                corridor=corridor,
+            )
+            gates.append(gate)
+            cursor += 1
+
+    return gates
+
+gates = generate_gates()
+
+#-------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------
 #Plotting the flight data to verify by visual inspection
 def plot_flight_distributions(flights):
     # ---------- Domestic vs International (arrival) ----------
-    labels_dom = ["Domestic", "International"]
+    labels_dom = ["Domestic", "International arrival"]
     counts_dom = [
         sum(f.arrival_destination == "domestic" for f in flights),
         sum(f.arrival_destination == "international" for f in flights),
@@ -204,10 +247,43 @@ def plot_flight_distributions(flights):
     plt.tight_layout()
     plt.show()
 
+def plot_gate_distributions(gates):
+    # ---------- Gate size distribution (B–F) ----------
+    sizes = [g.gate_size for g in gates]
+    size_counts = Counter(sizes)
+    size_labels = sorted(size_counts.keys())
+    size_values = [size_counts[s] for s in size_labels]
+
+    plt.figure()
+    plt.pie(size_labels, size_values)
+    plt.title("Gate size distribution")
+    plt.show()
+
+    # ---------- Passenger vs Cargo gates ----------
+    labels_ent = ["Passenger", "Cargo"]
+    counts_ent = [
+        sum(g.entity == "passenger" for g in gates),
+        sum(g.entity == "cargo" for g in gates),
+    ]
+
+    plt.figure()
+    plt.pie(counts_ent, labels=labels_ent, autopct="%1.1f%%")
+    plt.title("Gate Entity: Passenger vs Cargo")
+    plt.show()
+
+    # ---------- Terminal proximity distribution ----------
+    proximity_counts = Counter(g.terminal_proximity for g in gates)
+    proximity_labels = sorted(proximity_counts.keys())
+    proximity_values = [proximity_counts[p] for p in proximity_labels]
+
+    plt.figure()
+    plt.bar(proximity_labels, proximity_values)
+    plt.xlabel("Terminal Proximity")
+    plt.ylabel("Number of gates")
+    plt.title("Gate Terminal Proximity Distribution")
+    plt.show()
+
+
 if __name__ == "__main__":
     plot_flight_distributions(flights)
-
-
-#-------------------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------------------
-#Gate generator
+    plot_gate_distributions(gates)
