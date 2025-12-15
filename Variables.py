@@ -1,6 +1,4 @@
-import numpy as np
-
-F = {}
+F = {} #set of flights
 A = {} #set of arrival flights
 D = {} #set of departure flights
 ai = {} #scheduled arrival time i
@@ -8,20 +6,65 @@ di = {} #scheduled departure time for flight i
 W = {} #set of aprons
 G = {} #set of gates, Gn+1 is remote gate set, G0 is contact gate set
 K = {} #set of gate types
+Q = {} #set of airline types
+Gamma = {} #set of runways
+Gammai = {} #set of runways available for flight i
+ek = {} #upper limit of number of available gates for gate type k
 
-X_kw = np.zeros((len(K), len(W))) #binary variable, 1 if gate type k is in apron w, 0 otherwise
-l_k = np.zeros((len(K), len(W))) #binary variable, 1 if gate type k belongs to remote gate, 0 otherwise
-
-for i in range(len(K)):
-    for j in range(len(W)):
-        if K[i].apron == W[j]:
-            X_kw[i][j] = 1
-            
-F_k = np.zeros((len(F), len(K))) #binary variable, 1 if flight i can be assigned to gate k, 0 otherwise
 for i in range(len(F)):
-    for j in range(len(K)):
-        if ord(F[i].aircraft_size) <= ord(K[j].gate_size):
-            if F[i].entity == K[j].entity:
-                if F[i].arrival_destination == K[j].terminal_proximity and F[i].departure_destination == K[j].terminal_proximity or K[j].terminal_proximity == "convertible" or K[j].terminal_proximity == "remote":
-                    F_k[i][j] = 1
+    for j in range(len(k)):
+        if ord(F[i].aircraft_size) <= ord(k[j].gate_size):
+            if F[i].entity == k[j].entity:
+                F_k[i][j] = 1
+        
+        
+
+        else:
+            F_k[i][j] = 0
+
+#define set of gate types K based on terminal proximity and gate size
+def gate_type(Gate):
+    return (Gate.terminal_proximity, Gate.gate_size)
+
+K = [gate_type(g) for g in G] 
+K = list({gate_type(g) for g in G})
+
+def gate_type(gate):
+    return (gate.terminal_proximity, gate.gate_size)
+
+def allowed_park(gate, flight):
+    # Check gate size compatibility
+    if flight.size > gate.gate_size:
+        return False
+    
+    # Check terminal proximity rules
+    if flight.is_international and gate.terminal_proximity != "international":
+        return False
+    
+    # You can add more logic here if needed
+    # e.g. arrival/departure restrictions
+
+    return True
+
+
+def flights_allowed_at_type(k, G, F):
+    # k = (terminal_proximity, gate_size)
+    prox, size = k
+    
+    allowed_flights = []
+    
+    for flight in F:
+        # create a fake gate with type k to test compatibility
+        test_gate = Gate(prox, size, None, None, None)
+        if allowed_park(test_gate, flight):
+            allowed_flights.append(flight)
+    
+    return allowed_flights
+
+    
+    
+
+    
+    
+
 
