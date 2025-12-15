@@ -15,7 +15,13 @@ class Flight:
         self.departure_time = departure_time #Departure time of the flight
         self.departure_destination = departure_destination #Departure destination of the flight (domestic or international)
         self.airline = airline #Airline operating the flight
-
-
-
-
+    
+    def __repr__(self):
+        return (
+            f"Flight("
+            f"size={self.aircraft_size}, "
+            f"entity={self.entity}, "
+            f"arr={self.arrival_destination}@{self.arrival_time}, "
+            f"dep={self.departure_destination}@{self.departure_time}, "
+            f"airline={self.airline})"
+        )
