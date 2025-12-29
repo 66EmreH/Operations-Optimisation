@@ -1,291 +1,196 @@
-import numpy as np
+import random
 from Classes import Flight, Gate
-import matplotlib.pyplot as plt
-from collections import Counter
+from Instances import test_case, paper_case
 
-#Generation of example data to use
-#-------------------------------------------------------------------------------------------
-#Set the parameters of the data, such as distribution of domestic/int etc...
-Flight_Distribution = {
-    #Domestic 
-    "p_domestic_arrival":   0.85,
-    "p_domestic_departure": 0.85,
-    #Passenger vs Cargo
-    "p_passenger": 0.95,
-    #Aircraft size distribution
-    "aircraft_size_probs": {
-        "B": 0.10,
-        "C": 0.55,
-        "D": 0.20,
-        "E": 0.10,
-        "F": 0.05,
-    },
-    #Airline distribution 
-    "airline_probs": {
-        "CZ": 0.50,
-        "ZH": 0.10,
-        "CA": 0.10,
-        "FM": 0.08,
-        "JD": 0.07,
-        "AK": 0.05,
-        "OQ": 0.05,
-        "GJ": 0.05,
-    },
-}
+#Functions to construct data from the instances
+#Build instance runs all other functions inside of it.
 
-Gate_distribution = {
-    #Gate size
-    "gate_size": {
-        "B": 0.05,
-        "C": 0.45,
-        "D": 0.20,
-        "E": 0.25,
-        "F": 0.05,
-    },
-    #Gate entitity
-    "gate_pax": 0.75,
-    #Terminal proximity
-    "terminal_proximity": {
-        "Domestic": 0.5,
-        "International": 0.4,
-        "Convertible": 0.10,
-    },
-    #Gates att apron (237 total) MENTION SIMPLIFICATION THAT THERE IS NO CORRELATION APPRON AND TYPE OF GATE
-    "Appron_gates": {
-        "1": 8,
-        "2": 12,
-        "3": 11,
-        "4": 16,
-        "5": 15,
-        "6": 10,
-        "7": 9,
-        "8": 13,
-        "9": 9,
-        "10": 17,
-        "11": 22,
-        "12": 20,
-        "13": 8,
-        "14": 6,
-        "15": 21,
-        "16": 18,
-        "17": 20,
-        "18": 24,
-    }
-}
 
-#-------------------------------------------------------------------------------------------
-#Function to sample randomly
-def _sample_from_dict(rng, prob_dict, n):
-    labels = list(prob_dict.keys())
-    probs  = np.array(list(prob_dict.values()), dtype=float)
-    probs /= probs.sum()
-    return rng.choice(labels, size=n, p=probs)
+#Helpers---------------------------------------------------------
+#See which case we want to run
+def get_case(case_name):
+    if case_name == "test_case":
+        return test_case
+    if case_name == "paper_case":
+        return paper_case
+    raise ValueError("Unknown case_name")
+#Perform a weighted choice
+def weighted_choice(prob_dict):
+    # prob_dict: {"C":0.7, "D":0.2, ...}
+    r = random.random()
+    s = 0.0
+    for k, p in prob_dict.items():
+        s += p
+        if r <= s:
+            return k
+    # fallback if probs don't sum perfectly (due to 0.699999999)
+    return list(prob_dict.keys())[-1]
 
-#-------------------------------------------------------------------------------------------
-#Flight generator
-#We do this by making a list of aircraft sizes randomly, and attributing it to the flight with the same rank
-def generate_flights(n_flights: int,cfg: dict | None = None,seed: int | None = 42):
-    if cfg is None:
-        cfg = Flight_Distribution
-    rng = np.random.default_rng(seed)
 
-    #Sample categorical attributes
-    aircraft_sizes = _sample_from_dict(rng, cfg["aircraft_size_probs"], n_flights)
-    airlines = _sample_from_dict(rng, cfg["airline_probs"], n_flights)
+#Building Data---------------------------------------------------
+#Build flights
+def build_flights(cfg):
+    flights_cfg = cfg["flights"]
 
-    #Domestic / international for arrival & departure
-    arrival_destinations = np.where(rng.random(n_flights) < cfg["p_domestic_arrival"],"domestic","international")
-    departure_destinations = np.where(rng.random(n_flights) < cfg["p_domestic_departure"],"domestic","international")
+    if flights_cfg["mode"] == "fixed":
+        flights = []
+        for t in flights_cfg["list"]:
+            flights.append(Flight(*t))
+        return flights
 
-    #Passenger / cargo
-    entities = np.where(rng.random(n_flights) < cfg["p_passenger"],"passenger","cargo")
+    #generated
+    n = flights_cfg["n_flights"]
+    start = flights_cfg["horizon_start"]
+    end = flights_cfg["horizon_end"]
 
-    #Simple time model: minutes in day
-    arrival_times = rng.integers(0, 1400, size=n_flights)
-    
-    #departure 30–180 minutes after arrival
-    departure_times = arrival_times + rng.integers(30, 180, size=n_flights)
+    sizes = flights_cfg["sizes"]
+    entities = flights_cfg["entities"]
+    intl_share = flights_cfg["international_share"]
+    turnaround = flights_cfg["turnaround"]
+    airlines = flights_cfg["airlines"]
 
-    #build Flight objects
+    max_turnaround = max(turnaround.values())
+
     flights = []
-    for i in range(n_flights):
-        f = Flight(
-            aircraft_size       = aircraft_sizes[i],
-            entity              = entities[i],
-            arrival_time        = int(arrival_times[i]),
-            arrival_destination = arrival_destinations[i],
-            departure_time      = int(departure_times[i]),
-            departure_destination = departure_destinations[i],
-            airline             = airlines[i],
+    for i in range(1, n + 1):
+        flight_id = f"F{i}"
+
+        size = weighted_choice(sizes)
+        entity = weighted_choice(entities)
+
+        arr_time = random.randint(start, end - max_turnaround)
+
+        #destination types
+        if random.random() < intl_share:
+            arr_dest = "international"
+        else:
+            arr_dest = "domestic"
+
+        #for now assume arrival and destination are both the same 
+        dep_dest = arr_dest
+        dep_time = arr_time + turnaround[size]
+
+        airline = random.choice(airlines)
+
+        flights.append(
+            Flight(flight_id, size, entity, arr_time, arr_dest, dep_time, dep_dest, airline)
         )
-        flights.append(f)
+
     return flights
+#Build gates
+def build_gates(cfg):
+    gates_cfg = cfg["gates"]
 
-flights = generate_flights(1200)
+    if gates_cfg["mode"] == "fixed":
+        gates = []
+        for t in gates_cfg["list"]:
+            gates.append(Gate(*t))
+        return gates
 
-#-------------------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------------------
-#Gate generator, uses seed of 42 if None is given, total = 237 
-def generate_gates(cfg: dict | None = None, seed: int | None = 42,
-                   expected_total: int | None = 237, strict_total: bool = False):
-    
-    #If no other config is given, use dict from Guanghzou
-    if cfg is None:
-        cfg = Gate_distribution
+    #apron_template
+    apron_counts = gates_cfg["apron_counts"]
+    prox_share = gates_cfg["terminal_proximity_share"]
+    size_share = gates_cfg["gate_sizes"]
+    entity_share = gates_cfg["entities"]
 
-    #set rng, and get gates per apron
-    rng = np.random.default_rng(seed)
-    apron_counts = cfg["Appron_gates"]
-
-    #Count total gates, check if it is equal to expected total
-    total_gates = sum(apron_counts.values())
-    if expected_total is not None and total_gates != expected_total:
-        msg = f"Gate distribution adds to {total_gates} gates (expected {expected_total})."
-        if strict_total:
-            raise ValueError(msg)
-        print(f"Warning: {msg}")
-
-    #Get sample distribution
-    gate_sizes = _sample_from_dict(rng, cfg["gate_size"], total_gates)
-    terminal_types = _sample_from_dict(rng, cfg["terminal_proximity"], total_gates)
-    entities = np.where(rng.random(total_gates) < cfg["gate_pax"], "passenger", "cargo")
-
-    #Start of generation, loop over approns, and loop over corridors(gates) in each apron
     gates = []
-    cursor = 0
-    for apron, count in apron_counts.items():
-        for corridor in range(1, count + 1):
-            gate = Gate(
-                terminal_proximity=terminal_types[cursor].lower(),
-                gate_size=gate_sizes[cursor],
-                entity=entities[cursor],
-                apron=str(apron),
-                corridor=corridor,
-            )
-            gates.append(gate)
-            cursor += 1
+    g = 1
+
+    for apron, corridor_list in apron_counts.items():
+        for corridor_index, n_gates in enumerate(corridor_list, start=1):
+            for _ in range(n_gates):
+                gate_id = f"G{g}"
+                g += 1
+
+                prox = weighted_choice(prox_share)
+                gate_size = weighted_choice(size_share)
+                entity = weighted_choice(entity_share)
+
+                gates.append(Gate(gate_id, prox, gate_size, entity, apron, corridor_index))
 
     return gates
 
-gates = generate_gates()
 
-#-------------------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------------------
-#Plotting the flight data to verify by visual inspection
-def plot_flight_distributions(flights):
-    # ---------- Domestic vs International (arrival) ----------
-    labels_dom = ["Domestic", "International arrival"]
-    counts_dom = [
-        sum(f.arrival_destination == "domestic" for f in flights),
-        sum(f.arrival_destination == "international" for f in flights),
-    ]
+#Model_Helpers---------------------------------------------------
+#Check for compatibility of gates and flights
+def build_compatibility(flights, gates):
+    # Hard rules:
+    # 1) entity must match - cargo or pax
+    # 2) aircraft size must fit in gate size
+    # 3) international flights cannot use domestic gates
 
-    plt.figure()
-    plt.pie(counts_dom, labels=labels_dom, autopct="%1.1f%%")
-    plt.title("Arrival destination: Domestic vs International")
-    plt.show()
+    size_order = {"B": 1, "C": 2, "D": 3, "E": 4, "F": 5}
 
-    # ---------- Passenger vs Cargo ----------
-    labels_ent = ["Passenger", "Cargo"]
-    counts_ent = [
-        sum(f.entity == "passenger" for f in flights),
-        sum(f.entity == "cargo" for f in flights),
-    ]
+    compat = {}  # flight_id -> list of gate_id
+    for f in flights:
+        allowed = []
+        f_intl = f.is_international()
 
-    plt.figure()
-    plt.pie(counts_ent, labels=labels_ent, autopct="%1.1f%%")
-    plt.title("Entity: Passenger vs Cargo")
-    plt.show()
+        for g in gates:
+            if f.entity != g.entity:
+                continue
 
-    # ---------- Aircraft size distribution (B–F) ----------
-    sizes = [f.aircraft_size for f in flights]
-    size_counts = Counter(sizes)
-    size_labels = sorted(size_counts.keys())
-    size_values = [size_counts[s] for s in size_labels]
+            if size_order[f.aircraft_size] > size_order[g.gate_size]:
+                continue
 
-    plt.figure()
-    plt.bar(size_labels, size_values)
-    plt.xlabel("Aircraft size class")
-    plt.ylabel("Number of flights")
-    plt.title("Aircraft size distribution")
-    plt.show()
+            if f_intl and g.terminal_proximity == "domestic":
+                continue
 
-    # ---------- Airline distribution + % domestic (like Fig. 11) ----------
-    airlines_all = [f.airline for f in flights]
-    airlines_dom = [f.airline for f in flights
-                    if f.arrival_destination == "domestic"]
+            allowed.append(g.gate_id)
 
-    total_counts = Counter(airlines_all)
-    dom_counts = Counter(airlines_dom)
+        compat[f.flight_id] = allowed
 
-    # ---- SORT airlines by descending total flight count ----
-    sorted_airlines = sorted(
-        total_counts.keys(),
-        key=lambda a: total_counts[a],
-        reverse=True
-    )
+    return compat
+#Chef for overlapping flights
+def build_overlaps(flights):
+    # overlap if time windows intersect:
+    # [a1,d1] overlaps [a2,d2] when not (d1 <= a2 or d2 <= a1)
 
-    nums = [total_counts[a] for a in sorted_airlines]
-    domestic_pct = [
-        100 * dom_counts[a] / total_counts[a]
-        for a in sorted_airlines
-    ]
+    overlaps = []  # list of (flight_id_1, flight_id_2)
+    n = len(flights)
 
-    # ---- Plot ----
-    fig, ax1 = plt.subplots()
+    for i in range(n):
+        f1 = flights[i]
+        a1, d1 = f1.occupancy_window()
 
-    ax1.bar(sorted_airlines, nums)
-    ax1.set_xlabel("Airline (IATA)")
-    ax1.set_ylabel("Number of flights")
+        for j in range(i + 1, n):
+            f2 = flights[j]
+            a2, d2 = f2.occupancy_window()
 
-    ax2 = ax1.twinx()
-    ax2.plot(sorted_airlines, domestic_pct, marker="o")
-    ax2.set_ylabel("Percentage of domestic flights (%)")
+            if not (d1 <= a2 or d2 <= a1):
+                overlaps.append((f1.flight_id, f2.flight_id))
 
-    plt.title("Airline attributes (count + % domestic)")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
-
-def plot_gate_distributions(gates):
-    # ---------- Gate size distribution (B–F) ----------
-    sizes = [g.gate_size for g in gates]
-    size_counts = Counter(sizes)
-    size_labels = sorted(size_counts.keys())
-    size_values = [size_counts[s] for s in size_labels]
-
-    plt.figure()
-    plt.bar(size_labels, size_values)
-    plt.xlabel("Gate size class")
-    plt.ylabel("Number of gates")
-    plt.title("Gate size distribution")
-    plt.show()
-
-    # ---------- Passenger vs Cargo gates ----------
-    labels_ent = ["Passenger", "Cargo"]
-    counts_ent = [
-        sum(g.entity == "passenger" for g in gates),
-        sum(g.entity == "cargo" for g in gates),
-    ]
-
-    plt.figure()
-    plt.pie(counts_ent, labels=labels_ent, autopct="%1.1f%%")
-    plt.title("Gate Entity: Passenger vs Cargo")
-    plt.show()
-
-    # ---------- Terminal proximity distribution ----------
-    proximity_counts = Counter(g.terminal_proximity for g in gates)
-    proximity_labels = sorted(proximity_counts.keys())
-    proximity_values = [proximity_counts[p] for p in proximity_labels]
-
-    plt.figure()
-    plt.bar(proximity_labels, proximity_values)
-    plt.xlabel("Terminal Proximity")
-    plt.ylabel("Number of gates")
-    plt.title("Gate Terminal Proximity Distribution")
-    plt.show()
+    return overlaps
 
 
-if __name__ == "__main__":
-    plot_flight_distributions(flights)
-    plot_gate_distributions(gates)
+#Main-------------------------------------------------------------
+#Construct the instace
+def build_instance(case_name, seed=None):
+    cfg = get_case(case_name)
+
+    if seed is None:
+        seed = cfg.get("seed", 1)
+
+    random.seed(seed)
+
+    flights = build_flights(cfg)
+    gates = build_gates(cfg)
+
+    compat = build_compatibility(flights, gates)
+    overlaps = build_overlaps(flights)
+
+    instance = {
+        "case_name": case_name,
+        "seed": seed,
+        "flights": flights,
+        "gates": gates,
+        "compat": compat,
+        "overlaps": overlaps,
+    }
+
+    #Check if a plane has any compatible gates
+    for fid, allowed in compat.items():
+        if len(allowed) == 0:
+            print("No compatible gates for", fid)
+
+    return instance

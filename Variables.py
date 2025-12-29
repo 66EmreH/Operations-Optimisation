@@ -17,8 +17,6 @@ for i in range(len(F)):
             if F[i].entity == k[j].entity:
                 F_k[i][j] = 1
         
-        
-
         else:
             F_k[i][j] = 0
 
@@ -46,7 +44,6 @@ def allowed_park(gate, flight):
 
     return True
 
-
 def flights_allowed_at_type(k, G, F):
     # k = (terminal_proximity, gate_size)
     prox, size = k
@@ -60,11 +57,3 @@ def flights_allowed_at_type(k, G, F):
             allowed_flights.append(flight)
     
     return allowed_flights
-
-    
-    
-
-    
-    
-
-
