@@ -62,3 +62,4 @@ def reset():
     TD.clear()
     Tmin.clear()
     lk.clear()
+push ding
