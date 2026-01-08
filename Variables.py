@@ -1,59 +1,64 @@
-F = {} #set of flights
-A = {} #set of arrival flights
-D = {} #set of departure flights
-ai = {} #scheduled arrival time i
-di = {} #scheduled departure time for flight i 
-W = {} #set of aprons
-G = {} #set of gates, Gn+1 is remote gate set, G0 is contact gate set
-K = {} #set of gate types
-Q = {} #set of airline types
-Gamma = {} #set of runways
-Gammai = {} #set of runways available for flight i
-ek = {} #upper limit of number of available gates for gate type k
+F = []        #Flights
+G = []        #Gates
+K = []        #Gate types
+Gamma = []    #runways
 
-for i in range(len(F)):
-    for j in range(len(k)):
-        if ord(F[i].aircraft_size) <= ord(k[j].gate_size):
-            if F[i].entity == k[j].entity:
-                F_k[i][j] = 1
-        
-        else:
-            F_k[i][j] = 0
+#Relations between flights
+compat = {}      # compat[i] = list of gates compatible with flight i
+overlaps = {}    # overlaps[i] = list of flights overlapping with flight i
 
-#define set of gate types K based on terminal proximity and gate size
-def gate_type(Gate):
-    return (Gate.terminal_proximity, Gate.gate_size)
+#Subsets
+gate_to_k = {}        # gate_id -> gate type k
+F_k = {}              # F_k[k] = flights compatible with gate type k
+Gamma_i = {}          # Gamma_i[i] = departure runways available for flight i
+arrival_runway = {}   # fixed arrival runway for flight i (parameter)
 
-K = [gate_type(g) for g in G] 
-K = list({gate_type(g) for g in G})
+#Times
+ai = {}   # scheduled arrival time of flight i
+di = {}   # scheduled departure time of flight i
 
-def gate_type(gate):
-    return (gate.terminal_proximity, gate.gate_size)
+#Objective weights
+C1 = 1.0   # taxi / fuel weight
+C2 = 1.0   # robustness weight
+C3 = 1.0   # remote gate penalty weight
 
-def allowed_park(gate, flight):
-    # Check gate size compatibility
-    if flight.size > gate.gate_size:
-        return False
-    
-    # Check terminal proximity rules
-    if flight.is_international and gate.terminal_proximity != "international":
-        return False
-    
-    # You can add more logic here if needed
-    # e.g. arrival/departure restrictions
+#Objective parameters
+fi = {}      # fuel factor per flight i
+TA = {}      # arrival taxi time: TA[(i, k)]
+TD = {}      # departure taxi time: TD[(i, k, gamma)]
+Tmin = {}    # minimum taxi time per flight i
+lk = {}      # remote penalty per gate type k
 
-    return True
+#Reset of everything
+def reset():
+    """Clear all variables (useful when re-running models)."""
+    global F, A, D, G, K, Gamma
+    global compat, overlaps
+    global gate_to_k, F_k, Gamma_i, arrival_runway
+    global ai, di
+    global C1, C2, C3
+    global fi, TA, TD, Tmin, lk
 
-def flights_allowed_at_type(k, G, F):
-    # k = (terminal_proximity, gate_size)
-    prox, size = k
-    
-    allowed_flights = []
-    
-    for flight in F:
-        # create a fake gate with type k to test compatibility
-        test_gate = Gate(prox, size, None, None, None)
-        if allowed_park(test_gate, flight):
-            allowed_flights.append(flight)
-    
-    return allowed_flights
+    F.clear()
+    A.clear()
+    D.clear()
+    G.clear()
+    K.clear()
+    Gamma.clear()
+
+    compat.clear()
+    overlaps.clear()
+
+    gate_to_k.clear()
+    F_k.clear()
+    Gamma_i.clear()
+    arrival_runway.clear()
+
+    ai.clear()
+    di.clear()
+
+    fi.clear()
+    TA.clear()
+    TD.clear()
+    Tmin.clear()
+    lk.clear()

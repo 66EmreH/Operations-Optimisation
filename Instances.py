@@ -4,10 +4,10 @@
 test_case = {"seed": 1,
     "flights": {"mode": "fixed",
         "list": [
-            # flight_id, aircraft_size, entity, arr_time, arr_dest, dep_time, dep_dest, airline
-            ("F1", "C", "passenger",  60, "domestic",      120, "domestic",      "A1"),
-            ("F2", "C", "passenger",  80, "international", 140, "international", "A1"),
-            ("F3", "B", "cargo",     100, "domestic",      160, "domestic",      "C1"),
+            # flight_id, aircraft_size, entity, arr_time, arr_dest, dep_time, dep_dest, airline, arrival runway
+            ("F1", "C", "passenger",  60, "domestic",      120, "domestic",      "A1", "01"),
+            ("F2", "C", "passenger",  80, "international", 140, "international", "A1", "01"),
+            ("F3", "B", "cargo",     100, "domestic",      160, "domestic",      "C1", "01"),
         ],
     },
 
@@ -34,11 +34,12 @@ paper_case = {"seed": 42,
         "international_share": 0.20,
         "turnaround": {"B": 25, "C": 35, "D": 50, "E": 110, "F": 150,},
         "airlines": ["A1", "A2", "A3", "B1", "B2", "C1"],
+        "Arrival_runways": ["01"]
     },
 
     "gates": {
         "mode": "apron_template",
-        "apron_counts": {"A1": [8],
+        "apron_counts": {"A1": [8], 
                          "A2": [12], 
                          "A3": [11], 
                          "A4": [16],
@@ -61,4 +62,5 @@ paper_case = {"seed": 42,
         "gate_sizes": {"B": 0.05, "C": 0.45, "D": 0.2, "E": 0.25, "F": 0.05}, #Dist of gate sizes
         "entities": {"passenger": 0.8, "cargo": 0.20},
     },
+
 }

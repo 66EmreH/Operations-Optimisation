@@ -48,6 +48,7 @@ def build_flights(cfg):
     intl_share = flights_cfg["international_share"]
     turnaround = flights_cfg["turnaround"]
     airlines = flights_cfg["airlines"]
+    arrival_runways = flights_cfg["Arrival_runways"]
 
     max_turnaround = max(turnaround.values())
 
@@ -71,9 +72,10 @@ def build_flights(cfg):
         dep_time = arr_time + turnaround[size]
 
         airline = random.choice(airlines)
+        arrival_runway = random.choice(arrival_runways)
 
         flights.append(
-            Flight(flight_id, size, entity, arr_time, arr_dest, dep_time, dep_dest, airline)
+            Flight(flight_id, size, entity, arr_time, arr_dest, dep_time, dep_dest, airline, arrival_runway)
         )
 
     return flights
@@ -194,3 +196,4 @@ def build_instance(case_name, seed=None):
             print("No compatible gates for", fid)
 
     return instance
+

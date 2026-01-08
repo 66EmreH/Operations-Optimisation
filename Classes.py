@@ -14,7 +14,7 @@ class Gate:
         )
 
 class Flight:
-    def __init__(self, flight_id, aircraft_size, entity, arrival_time, arrival_destination, departure_time, departure_destination, airline):
+    def __init__(self, flight_id, aircraft_size, entity, arrival_time, arrival_destination, departure_time, departure_destination, airline, arrival_runway):
         self.flight_id = flight_id
         self.aircraft_size = aircraft_size
         self.entity = entity
@@ -23,6 +23,7 @@ class Flight:
         self.departure_time = departure_time #Minutes
         self.departure_destination = departure_destination #Int or dom
         self.airline = airline
+        self.arrival_runway = arrival_runway
 
     def is_international(self):
         return (
@@ -36,7 +37,7 @@ class Flight:
     def __repr__(self):
         return (
             f"Flight({self.flight_id}, "
-            f"{self.arrival_destination}@{self.arrival_time} -> "
+            f"{self.arrival_destination}@{self.arrival_time} on runway {self.arrival_runway}-> "
             f"{self.departure_destination}@{self.departure_time}, "
             f"size={self.aircraft_size})"
         )
