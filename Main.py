@@ -1,5 +1,6 @@
 from Data import build_instance, save_to_excel
 from collections import Counter
+from Model import build_model
 
 # ---------- TEST CASE ----------
 print("=== TEST CASE ===")
@@ -69,3 +70,5 @@ if len(zero_compat) > 0:
 
 # Save the instance data to an Excel file
 save_to_excel(flights, gates, filename="paper_case_data.xlsx")
+
+model = build_model()
