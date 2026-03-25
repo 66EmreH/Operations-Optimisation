@@ -1,7 +1,16 @@
-F = []        #Flights
-G = []        #Gates
-K = []        #Gate types
-Gamma = []    #runways
+F = {} #set of flights
+A = {} #set of arrival flights
+D = {} #set of departure flights
+ai = {} #scheduled arrival time i
+di = {} #scheduled departure time for flight i 
+W = {} #set of aprons
+G = {} #set of gates, Gn+1 is remote gate set, G0 is contact gate set
+K = {} #set of gate types
+H_k = {} #set of gates of type k
+Q = {} #set of airline types
+Gamma = {} #set of runways
+Gammai = {} #set of runways available for flight i
+ek = {} #upper limit of number of available gates for gate type k
 
 #Relations between flights
 compat = {}      # compat[i] = list of gates compatible with flight i
