@@ -83,11 +83,3 @@ for k in K:
             )
 
             rho[(k, i, u_id)] = 1 if (arrival_in_u or departure_in_u) else 0
-
-
-
-
-
-
-
-

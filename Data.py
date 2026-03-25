@@ -26,7 +26,6 @@ def weighted_choice(prob_dict):
     # fallback if probs don't sum perfectly (due to 0.699999999)
     return list(prob_dict.keys())[-1]
 
-
 #Building Data---------------------------------------------------
 #Build flights
 def build_flights(cfg):
@@ -94,7 +93,6 @@ def build_gates(cfg):
     prox_share = gates_cfg["terminal_proximity_share"]
     size_share = gates_cfg["gate_sizes"]
     entity_share = gates_cfg["entities"]
-
     gates = []
     g = 1
 
@@ -109,18 +107,11 @@ def build_gates(cfg):
                 entity = weighted_choice(entity_share)
 
                 gates.append(Gate(gate_id, prox, gate_size, entity, apron, corridor_index))
-
     return gates
-
 
 #Model_Helpers---------------------------------------------------
 #Check for compatibility of gates and flights
 def build_compatibility(flights, gates):
-    # Hard rules:
-    # 1) entity must match - cargo or pax
-    # 2) aircraft size must fit in gate size
-    # 3) international flights cannot use domestic gates
-
     size_order = {"B": 1, "C": 2, "D": 3, "E": 4, "F": 5}
 
     compat = {}  # flight_id -> list of gate_id
@@ -196,4 +187,3 @@ def build_instance(case_name, seed=None):
             print("No compatible gates for", fid)
 
     return instance
-
