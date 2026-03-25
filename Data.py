@@ -1,10 +1,10 @@
 import random
+import pandas as pd
 from Classes import Flight, Gate
 from Instances import test_case, paper_case
 
 #Functions to construct data from the instances
 #Build instance runs all other functions inside of it.
-
 
 #Helpers---------------------------------------------------------
 #See which case we want to run
@@ -155,6 +155,36 @@ def build_overlaps(flights):
 
     return overlaps
 
+
+#Export-----------------------------------------------------------
+#Save flights and gates to an Excel file (one sheet each)
+def save_to_excel(flights, gates, filename="instance_data.xlsx"):
+    flight_data = [{
+        "flight_id": f.flight_id,
+        "aircraft_size": f.aircraft_size,
+        "entity": f.entity,
+        "arrival_time": f.arrival_time,
+        "arrival_destination": f.arrival_destination,
+        "departure_time": f.departure_time,
+        "departure_destination": f.departure_destination,
+        "airline": f.airline,
+        "arrival_runway": f.arrival_runway,
+    } for f in flights]
+
+    gate_data = [{
+        "gate_id": g.gate_id,
+        "terminal_proximity": g.terminal_proximity,
+        "gate_size": g.gate_size,
+        "entity": g.entity,
+        "apron": g.apron,
+        "corridor": g.corridor,
+    } for g in gates]
+
+    with pd.ExcelWriter(filename) as writer:
+        pd.DataFrame(flight_data).to_excel(writer, sheet_name="Flights", index=False)
+        pd.DataFrame(gate_data).to_excel(writer, sheet_name="Gates", index=False)
+
+    print(f"Saved to {filename}")
 
 #Main-------------------------------------------------------------
 #Construct the instace

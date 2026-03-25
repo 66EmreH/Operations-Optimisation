@@ -1,4 +1,5 @@
-from Data import build_instance
+from Data import build_instance, save_to_excel
+from collections import Counter
 
 # ---------- TEST CASE ----------
 print("=== TEST CASE ===")
@@ -36,8 +37,6 @@ print("\nFirst 5 gates:")
 for g in inst["gates"][:5]:
     print(g)
 
-from collections import Counter
-
 flights = inst["flights"]
 gates = inst["gates"]
 compat = inst["compat"]
@@ -67,3 +66,6 @@ zero_compat = [fid for fid, allowed in compat.items() if len(allowed) == 0]
 print("Flights with 0 compatible gates:", len(zero_compat))
 if len(zero_compat) > 0:
     print("Example:", zero_compat[:10])
+
+# Save the instance data to an Excel file
+save_to_excel(flights, gates, filename="paper_case_data.xlsx")
