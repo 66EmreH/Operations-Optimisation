@@ -6,6 +6,7 @@ di = {} #scheduled departure time for flight i
 W = {} #set of aprons
 G = {} #set of gates, Gn+1 is remote gate set, G0 is contact gate set
 K = {} #set of gate types
+H_k = {} #set of gates of type k
 Q = {} #set of airline types
 Gamma = {} #set of runways
 Gammai = {} #set of runways available for flight i
