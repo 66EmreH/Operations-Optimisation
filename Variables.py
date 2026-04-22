@@ -1,12 +1,22 @@
+#Flight & Time variables
 F = {} #set of flights
 A = {} #set of arrival flights
 D = {} #set of departure flights
 ai = {} #scheduled arrival time i
-di = {} #scheduled departure time for flight i 
+di = {} #scheduled departure time for flight i
+
+TA = {}      # arrival taxi time: TA[(i, k)]
+TD = {}      # departure taxi time: TD[(i, k, gamma)]
+
+
+#Gates & Aprons variables
 W = {} #set of aprons
 G = {} #set of gates, Gn+1 is remote gate set, G0 is contact gate set
 K = {} #set of gate types
 H_k = {} #set of gates of type k
+
+
+
 Q = {} #set of airline types
 Gamma = {} #set of runways
 Gammai = {} #set of runways available for flight i
@@ -33,10 +43,38 @@ C3 = 1.0   # remote gate penalty weight
 
 #Objective parameters
 fi = {}      # fuel factor per flight i
-TA = {}      # arrival taxi time: TA[(i, k)]
-TD = {}      # departure taxi time: TD[(i, k, gamma)]
+
 Tmin = {}    # minimum taxi time per flight i
 lk = {}      # remote penalty per gate type k
+
+
+all_windows = set()
+for w in W:
+    for (u_id, u_start, u_end) in S_w[w]:
+        all_windows.add((u_id, u_start, u_end))
+
+rho = {}  # rho[(k, i, u_id)] = 0 or 1
+
+for k in K:
+    for i in F:
+        for (u_id, u_start, u_end) in all_windows:
+
+            arrival_in_u = (
+                liftA[i, k] >= u_start and liftA[i, k] < u_end
+            )
+            departure_in_u = (
+                liftD[i, k] >= u_start and liftD[i, k] < u_end
+            )
+
+            rho[(k, i, u_id)] = 1 if (arrival_in_u or departure_in_u) else 0
+
+
+mu_sgamma = np.zeros((len(S_r), gamma))
+for s in range(len(S_r)):
+    for g in range(gamma):
+        mu_sgamma[s][g] = A[s][g] + sum(()/
+                                        (t_a+d[g])
+                                        )
 
 #Reset of everything
 def reset():
