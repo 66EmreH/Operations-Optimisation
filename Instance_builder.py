@@ -292,4 +292,46 @@ def populate_sets(instances):
 
 #TODO Determine which runways we want to make available for each flight i   
     #set of runways available for flight i
-    Lambda_i = [[1,2,3,4]]*len(F) 
+    Lambda_i = [[1,2,3,4]]*len(F)
+
+    #Boolean parameter, if the gate type k is in apron w , it is 1, and otherwise, it is 0
+    chi_kw = {(k, w): 1 if k[4] == w else 0 for k in K for w in W}
+
+    #TODO, seems unnecessary since we don't use Q
+    #Boolean parameter, if the flight i is belong to the airline type q, it is 1, and otherwise, it is 0
+    #eta_iq
+
+    #Boolean parameter, if the gate type k belongs to remote gate, it is 1, and otherwise, it is 0
+    l_k = {k: 1 if k[1] == "remote" else 0 for k in K}
+
+    #TODO
+    t_A_ik = {} #start of parking time window for flight i at gate type k 
+    t_D_ik = {} #end of parking time window for flight i at gate type k
+
+
+    #parameter is affected by the gate type k assigned to the flight and the arrival and departure taxiing times
+    rho = {(i,k,u): 1 if t_A_ik in u or t_D_ik in u else 0 for i in F for k in K for u in S_w}
+
+    #Boolean parameter, 1 if flight i arrives or deperatures in time window s, and otherwise 0
+    Alpha_is = {(i, s): 1 if s <= F[i].arrival_time < s + 15 or s <= F[i].departure_time < s + 15 else 0 for i in F for s in S_r}
+
+    #upper limit of number of available gates for gate type k
+    e_k = {k: len(H_k[k]) for k in K}
+
+    #Time interval treshold between aircraft at a gate
+    #TODO, we need to define this, for now we set it to 30 minutes
+    ksi = 30
+
+    #Capacity limit of apron w at time u
+    N_w_tau = 5
+
+    #Maximum number of flights allowed on the runway during time window s
+    mu_sgamma #TODO
+
+    
+
+
+
+
+
+
