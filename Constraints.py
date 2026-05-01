@@ -1,11 +1,11 @@
 import gurobipy as gp
-from Variables import F, G, Gamma, K, A, D, F_k, H_k, mu_sgamma
+from Variables import F, G, Lambda, K, A, D, F_k, H_k, mu_sgamma, F_s_gamma_A, delta_tp, t_a, d, alpha_is, chi, rho, N_w_tau, W, S_w
 import numpy as np
 
 
 f = len(F) #number of flights
 g = len(G) #number of gates
-gamma = len(Gamma) #number of runways
+gamma = len(Lambda) #number of runways
 k = len(K) #number of gate types
 a = len(A) #number of arriving filghts
 d = len(D) #number of departing flights
@@ -15,7 +15,7 @@ m = gp.Model('Gate_Assignment')
 
 #Variables that need to be added
 ksi = None #time interval treshold, we still need to define this
-t_A_jk = None #Arrival time of flight j at gate type k @Emre is making this variable
+t_A_ik = None #Arrival time of flight i at gate type k @Emre is making this variable
 t_D_ik = None #Departure time of flight i at gate type k @Emre is making this variable
 M = 10000 #A big M constant
 #H_k is al toegevoegd
@@ -93,17 +93,17 @@ def Constraints(m):
     m.addConstrs(gp.quicksum(chi[k][w] *
         gp.quicksum(x_ijh[i][j][h] * rho[h][i][u] for j in F_k[k] if j != 0 and j != K) 
         for i in F_k[k]
-        for h in G) <= N_w_tau[u]
+        for h in G) <= N_w_tau[w,u]
     for w in W
     for u in S_w
     )
 
     # taxiing start time
-    tA[i,k] = a_i + TA[k,gamma_arrival]
+    tA[i,k] = a_i + TA[i,k,gamma_arrival]
 
     # taxiing end time
     tD[i,k] = d_i - sum(
-        y[i,gamma] * TD[i,k,gamma] for gamma in runways
+        y[i,gamma] * TD[i,k,gamma] for gamma in Lambda
     )
 
 
@@ -114,8 +114,9 @@ def Constraints(m):
         alpha_is[i][s] * y_igamma[gamma][i]) + A[s][g] for i in D<= 
         mu_sgamma[s][g] 
         for s in S_r
-        for g in Gamma)
+        for g in Lambda)
 
 
     #21
-
+    m.addConstrs(mu_sgamma[s][g] == np.abs(F_s_gamma_A[s][g]) +gp.quicksum((delta_tp[p])/(t_a[i]+d) ))
+  
