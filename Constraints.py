@@ -1,11 +1,11 @@
 import gurobipy as gp
-from Variables import F, G, Gamma, K, A, D, F_k, H_k
+from Variables import F, G, Lambda, K, A, D, F_k, H_k, mu_sgamma, F_s_gamma_A, delta_tp, t_a, d, alpha_is, chi, rho, N_w_tau, W, S_w
 import numpy as np
 
 
 f = len(F) #number of flights
 g = len(G) #number of gates
-gamma = len(Gamma) #number of runways
+gamma = len(Lambda) #number of runways
 k = len(K) #number of gate types
 a = len(A) #number of arriving filghts
 d = len(D) #number of departing flights
@@ -14,8 +14,8 @@ hk = len(H_k) #number of gates of type k
 m = gp.Model('Gate_Assignment')
 
 #Variables that need to be added
-xi = None #time interval treshold, we still need to define this
-t_A_jk = None #Arrival time of flight j at gate type k @Emre is making this variable
+ksi = None #time interval treshold, we still need to define this
+t_A_ik = None #Arrival time of flight i at gate type k @Emre is making this variable
 t_D_ik = None #Departure time of flight i at gate type k @Emre is making this variable
 M = 10000 #A big M constant
 #H_k is al toegevoegd
@@ -23,7 +23,12 @@ S_r = np.arange(96) #set 15 minutes time slots in total 96 in one day
 t_a = None #average departure time of flight F_D^s
 d = None #average safety interval on runway Gamma
 alpha_is = None #equals 1 if flight arrives or departs in runway time window 
-
+chi = None #equals 1 if gate type k is on apron w
+N_w_tau = None #capacity limit of apron w in the apron time window u, = 5
+rho = None #equals 1 if flight i is in apron time window u when parked at apron h of type k, else 0
+W = None #set of aprons
+S_w = None #set of time windows on apron w
+Lamba = None #set of runways available for flight i
 
 # --------------------------------------
 # Constraints
@@ -34,107 +39,84 @@ alpha_is = None #equals 1 if flight arrives or departs in runway time window
 #N_wtau = capacity limit of apron w in the apron time window u, = 5
 #apron time window = 30 min
 #type of gate
+def Constraints(m):
 
+    x_ijh = m.addVar(shape=(f, f, g), vtype=gp.GRB.BINARY, name='flights_i_and_j_are_assigned_to_gate_h_successively')
+    y_igamma =m.addVar(shape=(gamma, f), vtype=gp.GRB.BINARY, name='flight_i_takes_off_on_runway_gamma')
 
-x_ijh = m.addVar(shape=(f, f, g), vtype=gp.GRB.BINARY, name='flights_i_and_j_are_assigned_to_gate_h_successively')
-y_igamma =m.addVar(shape=(gamma, f), vtype=gp.GRB.BINARY, name='flight_i_takes_off_on_runway_gamma')
+    #13 only one gate selected per arriving flight
+    m.addConstrs(gp.quicksum(
+        x_ijh[i][j][h] 
+    for k in K 
+    for h in hk[k]
+    for j in fk
+    ) == 1
+    for i in range(a)
 
-#13
-m.addConstrs(gp.quicksum(
-    x_ijh[i][j][h] == 1
-for k in K 
-for h in hk[k]
-for j in fk
-)
-for i in range(a)
+    )
 
-)
+    #14 only one runway selected per departing flight
+    m.addConstrs(gp.quicksum(
+        y_igamma[gamma][i]
+    for gamma in Lamba[i])== 1
+    for i in range(d)
+    )
 
-#14
-m.addConstrs(gp.quicksum(
-    y_igamma[gamma][i]
-for gamma in range(gamma))== 1
-for i in range(d)
-)
+    #15  flights i and j parked continuously at the same gate cannot overlap in time and must meet a certain time interval threshold
+    m.addConstrs(t_A_jk[j][k] - t_D_ik[i][k] + M * (1 - x_ijh[i][j][h]) >=  ksi 
+                    for i in F_k[k] 
+                    for j in F_k[k] 
+                    for h in range(hk[k]) 
+                    for k in range(K)
+        )
 
-#15
+    #16 
+    m.addConstrs(gp.quicksum(x_ijh[l][i][h] for l in F_k[k]) - gp.quicksum(x_ijh[i][j][h] for j in F_k[k]) == 0
+    for h in H_k[k]
+    for k in K
+    for i in F_k[k]
+    #if i not in (start, end)
+    )
 
-#16 
-m.addConstrs(gp.quicksum(X_ijh[l][i][h] for l in compat[k]) - gp.quicksum(X_ijh[i][j][h] for j in compat[k]) == 0
-for h in Hk[k]
-for k in K
-for i in compat[k]
-if i not in (start, end)
-)
+    #17a
+    m.addConstrs(gp.quicksum(x_ijh[0][i][h] for i in F_k[k] if i != K) ==
+                gp.quicksum(x_ijh[i][-1][h] for i in F_k[k] if i != 0)
+            for h in G
+    )
 
-#17a
-m.addConstrs(gp.quicksum(X_ijh[start][i][h] for i in compat[type_of_gate[h]] if i != end) == gp.quicksum(X_ijh[i][end][h] for i in compat[type_of_gate[h]] if i != start)
-        for h in G
-)
+    #17b
+    m.addConstrs(gp.quicksum(x_ijh[0][i][h] for i in F_k[k] if i != K) <= 1
+            for h in G
+    )
 
-#17b
-m.addConstrs(gp.quicksum(X_ijh[start][i][h] for i in compat[type_of_gate[h]] if i != end) <= 1
-        for h in G
-)
+    #18
+    m.addConstrs(gp.quicksum(chi[k][w] *
+        gp.quicksum(x_ijh[i][j][h] * rho[h][i][u] for j in F_k[k] if j != 0 and j != K) 
+        for i in F_k[k]
+        for h in G) <= N_w_tau[w,u]
+    for w in W
+    for u in S_w
+    )
 
-#18
-m.addConstrs(gp.quicksum(chi[gate_type[h],w] * gp.quicksum(
-    gp.quicksum(X_ijh[i][j][h] for j in compat[gate_type[h]]) * rho[gate_type[h], i, u]
-    for i in compat[gate_type[h]]
-    if i not in (start, end))
-    for h in G) <= N_wtau
-for w in W
-for u in S_w[w]
-)
+    # taxiing start time
+    tA[i,k] = a_i + TA[i,k,gamma_arrival]
 
-# taxiing start time
-tA[i,k] = a_i + TA[i,k,gamma_arrival[i]]
-
-# taxiing end time
-tD[i,k] = d_i - sum(
-    y[i,gamma] * TD[i,k,gamma] for gamma in runways
-)
-
-all_windows = set()
-for w in W:
-    for (u_id, u_start, u_end) in S_w[w]:
-        all_windows.add((u_id, u_start, u_end))
-
-rho = {}  # rho[(k, i, u_id)] = 0 or 1
-
-for k in K:
-    for i in F:
-        for (u_id, u_start, u_end) in all_windows:
-
-            arrival_in_u = (
-                liftA[i, k] >= u_start and liftA[i, k] < u_end
-            )
-            departure_in_u = (
-                liftD[i, k] >= u_start and liftD[i, k] < u_end
-            )
-
-            rho[(k, i, u_id)] = 1 if (arrival_in_u or departure_in_u) else 0
-m.addConstrs(t_A_jk[j][k] - t_D_ik[i][k] + M * (1 - x_ijh[i][j][h]) >= - xi 
-             for i,j in fk 
-             for h in hk[k] 
-             for k in K
-)
+    # taxiing end time
+    tD[i,k] = d_i - sum(
+        y[i,gamma] * TD[i,k,gamma] for gamma in Lambda
+    )
 
 
 
+    #20
 
-#21
-mu_sgamma = np.zeros((len(S_r), gamma))
-for s in range(len(S_r)):
-    for g in range(gamma):
-        mu_sgamma[s][g] = A[s][g] + sum(()/
-                                        (t_a+d[g])
-                                        )
+    m.addConstrs(gp.quicksum(
+        alpha_is[i][s] * y_igamma[gamma][i]) + A[s][g] for i in D<= 
+        mu_sgamma[s][g] 
+        for s in S_r
+        for g in Lambda)
 
 
-#20
-
-m.addConstrs(gp.quicksum(
-    alpha_is[i][s] * y_igamma[gamma][i]) for i in D + A[s][g] <= 
-    mu_sgamma[s][g] for s in S_r for g in Gamma)
-
+    #21
+    m.addConstrs(mu_sgamma[s][g] == np.abs(F_s_gamma_A[s][g]) +gp.quicksum((delta_tp[p])/(t_a[i]+d) ))
+  
