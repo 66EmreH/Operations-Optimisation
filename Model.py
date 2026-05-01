@@ -4,6 +4,7 @@ import gurobipy as gp
 from Constraints import AddConstraints #still to be added
 from Variables import F, G, Gamma, K, A, F_k, C1, C2, C3
 
+
 def build_model():
     #Define model and model name---------------------------------------------------
     m = gp.Model('Gate_Assignment')

@@ -189,7 +189,6 @@ Paper_case_manuel = {"seed": 1,
                 ("Remote 312", "convertible", "C", "passenger", "REMOTE", 1),
                 ("Remote 313", "convertible", "C", "passenger", "REMOTE", 1),
 
-
                 ("Remote 314", "convertible", "C", "passenger", "REMOTE", 1),
                 ("Remote 315", "convertible", "C", "passenger", "REMOTE", 1),
                 ("Remote 316", "convertible", "C", "passenger", "REMOTE", 1),
