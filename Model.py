@@ -1,5 +1,5 @@
 import pandas as pd
-from Data import flights
+from Instance_builder import flights
 import gurobipy as gp
 from Constraints import AddConstraints #still to be added
 from Variables import F, G, Gamma, K, A, F_k, C1, C2, C3

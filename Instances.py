@@ -5,9 +5,9 @@ test_case = {"seed": 1,
     "flights": {"mode": "fixed",
         "list": [
             # flight_id, aircraft_size, entity, arr_time, arr_dest, dep_time, dep_dest, airline, arrival runway
-            ("F1", "C", "passenger",  60, "domestic",      120, "domestic",      "A1", "01"),
-            ("F2", "C", "passenger",  80, "international", 140, "international", "A1", "01"),
-            ("F3", "B", "cargo",     100, "domestic",      160, "domestic",      "C1", "01"),
+            ("F1", "C", "passenger",  60, "domestic",      120, "domestic",      "A1", 1),
+            ("F2", "C", "passenger",  80, "international", 140, "international", "A1", 1),
+            ("F3", "B", "cargo",     100, "domestic",      160, "domestic",      "C1", 1),
         ],
     },
 
@@ -69,9 +69,9 @@ Paper_case_manuel = {"seed": 1,
     "flights": {"mode": "fixed",
         "list": [
             # flight_id, aircraft_size, entity, arr_time, arr_dest, dep_time, dep_dest, airline, arrival runway
-            ("F1", "C", "passenger",  60, "domestic",      120, "domestic",      "A1", "01"),
-            ("F2", "C", "passenger",  80, "international", 140, "international", "A1", "01"),
-            ("F3", "B", "cargo",     100, "domestic",      160, "domestic",      "C1", "01"),
+            ("F1", "C", "passenger",  60, "domestic",      120, "domestic",      "A1", 1),
+            ("F2", "C", "passenger",  80, "international", 140, "international", "A1", 1),
+            ("F3", "B", "cargo",     100, "domestic",      160, "domestic",      "C1", 1),
         ],
     },
 

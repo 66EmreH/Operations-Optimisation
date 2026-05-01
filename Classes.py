@@ -2,7 +2,7 @@
 class Gate:
     def __init__(self, gate_id, terminal_proximity, gate_size, entity, apron, corridor):
         self.gate_id = gate_id
-        self.terminal_proximity = terminal_proximity #Proximity to terminal bridge
+        self.terminal_proximity = terminal_proximity #Proximity to terminal bridge (remote, domestic international convertible gates)
         self.gate_size = gate_size #Size of the gate Maximum aircraft size that can be accommodate classified as B,C,D,E,F
         self.entity = entity #Entities served by gate (passengers or cargo)
         self.apron = apron #Apron location of the gate

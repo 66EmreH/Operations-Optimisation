@@ -1,12 +1,12 @@
+from ast import Global
 import random
+from unicodedata import name
 import pandas as pd
 from Classes import Flight, Gate
 from Instances import test_case, paper_case
+from Variables import *
 
-#Functions to construct data from the instances
-#Build instance runs all other functions inside of it.
 
-#Helpers---------------------------------------------------------
 #See which case we want to run
 def get_case(case_name):
     if case_name == "test_case":
@@ -14,7 +14,7 @@ def get_case(case_name):
     if case_name == "paper_case":
         return paper_case
     raise ValueError("Unknown case_name")
-#Perform a weighted choice
+#get weights from probabilities
 def weighted_choice(prob_dict):
     # prob_dict: {"C":0.7, "D":0.2, ...}
     r = random.random()
@@ -26,8 +26,8 @@ def weighted_choice(prob_dict):
     # fallback if probs don't sum perfectly (due to 0.699999999)
     return list(prob_dict.keys())[-1]
 
-#Building Data---------------------------------------------------
-#Build flights
+
+#Build flights with combinations based on probability distributions
 def build_flights(cfg):
     flights_cfg = cfg["flights"]
 
@@ -217,3 +217,79 @@ def build_instance(case_name, seed=None):
             print("No compatible gates for", fid)
 
     return instance
+
+#run the instance only here
+if __name__ == "__main__":
+    inst = build_instance("paper_case", seed=38)
+    print("Instance built with", len(inst["flights"]), "flights and", len(inst["gates"]), "gates.")
+    print(inst["flights"][0])
+    print(inst["gates"][0])
+
+def populate_sets(instances):
+    #use global variables
+    Global F, G, A, D, W, Lambda
+
+    
+    F = {f.flight_id: f for f in instances["flights"]}        
+    """
+    flight_id  
+    aircraft_size 
+    entity 
+    arrival_time            #Integers 
+    arrival_destination 
+    departure_time          #Integer 
+    departure_destination
+    airline 
+    arrival_runway          #integer
+    """
+
+    G = {g.gate_id: g for g in instances["gates"]}
+    """
+    gate_id
+    terminal_proximity
+    gate_size
+    entity
+    apron
+    corridor                #Integer
+    """
+
+    A = F.copy()  # arrival flights
+    D = F.copy()  # departure flights
+
+    #unique apron types
+    W = set(g.apron for g in G.values())
+
+    #Set of gate types
+    K = set((g.terminal_proximity, g.gate_size, g.entity, g.apron, g.corridor) for g in G.values())
+
+    #Set of runways 
+    Lambda = [1,2,3,4]
+
+    #Set of apron time windows with u in S_w
+    S_w = set(range(0, 24*60, 30)) #every 30 minutes in a day
+
+    #Set of gates belonging to gate type k
+    H_k = {k: [g.gate_id for g in G.values() if (g.terminal_proximity, g.gate_size, g.entity, g.apron, g.corridor) == k] for k in K}
+
+    #Set of runway time windows with s in S_r
+    S_r = set(range(0, 24*60, 15)) #every 15 minutes in a day
+
+    #Set of arrival flights landing on runway gamma within time window s
+    F_s_gamma_A = {(s, gamma): [f.flight_id for f in A.values() if f.arrival_runway == gamma and s <= f.arrival_time < s + 15] for s in S_r for gamma in Lambda}
+
+    #Set of time intervals available between two successive approach flights on runway gamma in time window s, with p in P
+#TODO    #P = {(s, gamma): [f.arrival_time for f in A.values() if f.arrival_runway == gamma and s <= f.arrival_time < s + 15] for s in S_r for gamma in Lambda}
+
+    #Set of scheduled departure times within window s
+    F_s_D = {s: [f.flight_id for f in D.values() if s <= f.departure_time < s + 15] for s in S_r}
+
+    #F_k[k] = flights compatible with gate type k
+    F_k = {k: [f.flight_id for f in F.values() 
+               if ascii(f.aircraft_size) <= ascii(k[1])  
+               and (f.arrival_destination == k[1] or k[1] in ["convertible", "remote"]) 
+               and (f.departure_destination == k[1] or k[1] in ["convertible", "remote"]) 
+               and (f.entity == k[2])] for k in K}
+
+#TODO Determine which runways we want to make available for each flight i   
+    #set of runways available for flight i
+    Lambda_i = [[1,2,3,4]]*len(F) 
