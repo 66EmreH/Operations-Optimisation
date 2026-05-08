@@ -69,7 +69,7 @@ C3 = 1.0   # remote gate penalty weight
 
 #------------------------------------------
 #Fill in variables
-T_mini = min(TA[i][k][gamma_zero] + TD[i][k][gamma] for k in K for gamma in Lambda_i[i] for gamma_zero in Flight.arrival_runway for i in F) #Potential minimum total taxiing time of flight i when any available runway-gate type combination is selected
+#TODO: T_mini = min(TA[i][k][gamma_zero] + TD[i][k][gamma] for k in K for gamma in Lambda_i[i] for gamma_zero in Flight.arrival_runway for i in F)
 T_ki = {} #Additional taxi time for flight i if assigned to gate type k 
 
 

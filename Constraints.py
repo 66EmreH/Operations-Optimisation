@@ -48,7 +48,6 @@ def Constraints(m):
     x_ijh = m.addVar(shape=(len(F), len(F), len(G) ), vtype=gp.GRB.BINARY, name='flights_i_and_j_are_assigned_to_gate_h_successively')
     y_igamma =m.addVar(shape=(len(F), len(Lambda)), vtype=gp.GRB.BINARY, name='flight_i_takes_off_on_runway_gamma')
 
-
     #13 only one gate selected per arriving flight
     m.addConstrs(gp.quicksum(x_ijh[i][j][h] 
     for k in K 
