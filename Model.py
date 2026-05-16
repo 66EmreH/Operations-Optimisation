@@ -1,6 +1,6 @@
 from Data import flights
 import gurobipy as gp
-from Variables import F, G, Gamma, K, A, F_k, C1, C2, C3
+from Variables import *
 
 f = len(F) #number of flights
 g = len(G) #number of gates
