@@ -2,6 +2,8 @@ from Instance_builder import build_instance, save_to_excel, populate_sets
 from collections import Counter
 from Model import build_model
 
+
+
 #---------- TEST CASE ----------
 print("=== TEST CASE ===")
 test_inst = build_instance("test_case", seed=1)
