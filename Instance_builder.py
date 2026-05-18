@@ -1,8 +1,7 @@
 import random
-from unicodedata import name
 import pandas as pd
 from Classes import Flight, Gate
-from Instances import test_case, paper_case
+from Instances import test_case, Paper_case_manuel
 from Variables import *
 
 
@@ -10,8 +9,8 @@ from Variables import *
 def get_case(case_name):
     if case_name == "test_case":
         return test_case
-    if case_name == "paper_case":
-        return paper_case
+    if case_name == "paper_case_manuel":
+        return Paper_case_manuel
     raise ValueError("Unknown case_name")
 #get weights from probabilities
 def weighted_choice(prob_dict):
@@ -222,6 +221,8 @@ def populate_sets(instances):
     global F, G, A, D, W, Lambda
 
     
+    overlaps_set = set(instances["overlaps"])
+
     F = {f.flight_id: f for f in instances["flights"]}
     """
     flight_id
@@ -307,11 +308,12 @@ def populate_sets(instances):
     #eta_iq
 
     #Boolean parameter, if the gate type k belongs to remote gate, it is 1, and otherwise, it is 0
-    l_k = {k: 1 if k[0] == "remote" else 0 for k in K}
+    # k = (terminal_proximity, gate_size, entity, apron, corridor); remote stands use apron="REMOTE"
+    l_k = {k: 1 if k[3] == "REMOTE" else 0 for k in K}
 
-    #TODO
-    t_A_ik = {} #start of parking time window for flight i at gate type k
-    t_D_ik = {} #end of parking time window for flight i at gate type k
+    #TODO - currently computed in Constraints.py from flight times; populate here once TA/TD are calibrated
+    #t_A_ik = {} #start of parking time window for flight i at gate type k
+    #t_D_ik = {} #end of parking time window for flight i at gate type k
 
     #TODO: replace with actual values per aircraft type
     engine_data = {"B": (2, 3.0), "C": (2, 6.0), "D": (2, 9.0), "E": (2, 12.0), "F": (4, 15.0)}
@@ -361,6 +363,7 @@ def populate_sets(instances):
         "virtual_0": virtual_0,
         "virtual_n1": virtual_n1,
         "real_flight_ids": real_flight_ids,
+        "overlaps_set": overlaps_set,
     }
 
 
@@ -435,7 +438,7 @@ def print_sets(sets):
 
 #run the instance only here
 if __name__ == "__main__":
-    inst = build_instance("paper_case", seed=38)
+    inst = build_instance("paper_case_manuel", seed=38)
     print("Instance built with", len(inst["flights"]), "flights and", len(inst["gates"]), "gates.")
     sets = populate_sets(inst)
     print_sets(sets)

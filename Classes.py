@@ -2,7 +2,7 @@
 class Gate:
     def __init__(self, gate_id, terminal_proximity, gate_size, entity, apron, corridor):
         self.gate_id = gate_id
-        self.terminal_proximity = terminal_proximity #Proximity to terminal bridge (remote, domestic international convertible gates)
+        self.terminal_proximity = terminal_proximity #Remote, domestic international convertible gates)
         self.gate_size = gate_size #Size of the gate Maximum aircraft size that can be accommodate classified as B,C,D,E,F
         self.entity = entity #Entities served by gate (passengers or cargo)
         self.apron = apron #Apron location of the gate
@@ -16,14 +16,14 @@ class Gate:
 class Flight:
     def __init__(self, flight_id, aircraft_size, entity, arrival_time, arrival_destination, departure_time, departure_destination, airline, arrival_runway):
         self.flight_id = flight_id
-        self.aircraft_size = aircraft_size
-        self.entity = entity
+        self.aircraft_size = aircraft_size #in B,C,D,E,F
+        self.entity = entity #Passenger or cargo
         self.arrival_time = arrival_time #Minutes
         self.arrival_destination = arrival_destination #Int or dom
         self.departure_time = departure_time #Minutes
         self.departure_destination = departure_destination #Int or dom
-        self.airline = airline
-        self.arrival_runway = arrival_runway
+        self.airline = airline #Airline, not used
+        self.arrival_runway = arrival_runway #Arrival rwy
 
     def is_international(self):
         return (
