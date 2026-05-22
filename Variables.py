@@ -38,8 +38,7 @@ from Classes import *
 #t_a = {}       #average departure time of flight i in F^s_D
 #d_safety = 0   #average safety interval on runway gamma
 
-TA = {} #taxiing time from runway γ to gate type k for arriving flight i
-TD = {} #taxiing time from gate type k to runway γ for departing flight i
+#TA, TD now built inside populate_sets and returned via the sets dict.
 
 #Times
 #ai = {}   # scheduled arrival time of flight i

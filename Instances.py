@@ -64,13 +64,18 @@ test_case = {"seed": 1,
 # }
 
 Paper_case_manuel = {"seed": 1,
-    "flights": {"mode": "fixed",
-        "list": [
-            # flight_id, aircraft_size, entity, arr_time, arr_dest, dep_time, dep_dest, airline, arrival runway
-            ("F1", "C", "passenger",  60, "domestic",      120, "domestic",      "A1", 1),
-            ("F2", "C", "passenger",  80, "international", 140, "international", "A1", 1),
-            ("F3", "B", "cargo",     100, "domestic",      160, "domestic",      "C1", 1),
-        ],
+    #Paper Section 5.1 + Fig. 10 distributions; bump n_flights for the paper's medium/large scales.
+    "flights": {"mode": "generated",
+        "horizon_start": 0,
+        "horizon_end": 24 * 60,
+
+        "n_flights": 50,
+        "sizes": {"B": 0.02, "C": 0.80, "D": 0.0, "E": 0.17, "F": 0.01},   #Fig. 10 right
+        "entities": {"passenger": 0.90, "cargo": 0.10},                    #Fig. 10 centre
+        "international_share": 0.20,                                       #Fig. 10 left
+        "turnaround": {"B": 25, "C": 35, "D": 50, "E": 110, "F": 150},
+        "airlines": ["A1", "A2", "A3", "B1", "B2", "C1"],
+        "Arrival_runways": [3, 4],                                         #3=19R, 4=20L (arrival runways)
     },
 
     "gates": {"mode": "fixed",
