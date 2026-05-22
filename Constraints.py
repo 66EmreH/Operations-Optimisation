@@ -39,11 +39,11 @@ def Constraints(m, sets, x_ijh, y_igamma):
     #END PLACEHOLDER 
     
     #13 only one gate selected per arriving flight
-    # Only gate types where i is compatible; j != i excludes self-loops (not in valid_x).
+    # j != virtual_0 skips arcs removed from valid_x (no incoming arc into source).
     m.addConstrs((gp.quicksum(x_ijh[i, j, h]
         for k in K if i in F_k[k]
         for h in H_k[k]
-        for j in F_k[k] if j != i
+        for j in F_k[k] if j != i and j != virtual_0
         ) == 1
         for i in A),
     name="13"
@@ -58,21 +58,21 @@ def Constraints(m, sets, x_ijh, y_igamma):
     )
 
     #15 gap between consecutive flights at the same gate must meet the threshold ksi
-    # i != j already excludes self-loops; they were also removed from valid_x.
+    # i != virtual_n1 and j != virtual_0: skip arcs removed from valid_x.
     m.addConstrs((t_A_ik[j, k] - t_D_ik[i, k] + M * (1 - x_ijh[i, j, h]) >= ksi
         for k in K
-        for i in F_k[k]
-        for j in F_k[k] if i != j
+        for i in F_k[k] if i != virtual_n1 and i != virtual_0
+        for j in F_k[k] if i != j and j != virtual_0 and j != virtual_n1
         for h in H_k[k]
         if t_A_ik[j, k] - t_D_ik[i, k] < ksi),
     name="15"
     )
 
     #16 flow conservation: flight i has equally many predecessors and successors at each gate
-    # l != i and j != i guard against self-loops removed from valid_x.
+    # l != virtual_n1 and j != virtual_0 skip arcs removed from valid_x.
     m.addConstrs((
-        gp.quicksum(x_ijh[l, i, h] for l in F_k[k] if l != i) -
-        gp.quicksum(x_ijh[i, j, h] for j in F_k[k] if j != i) == 0
+        gp.quicksum(x_ijh[l, i, h] for l in F_k[k] if l != i and l != virtual_n1) -
+        gp.quicksum(x_ijh[i, j, h] for j in F_k[k] if j != i and j != virtual_0) == 0
         for k in K
         for h in H_k[k]
         for i in F_k[k] if i != virtual_0 and i != virtual_n1),
@@ -98,9 +98,9 @@ def Constraints(m, sets, x_ijh, y_igamma):
     )
 
     #18 apron capacity: total flights parked at apron w during window u <= N_w_tau
-    # j != i guards against self-loops removed from valid_x.
+    # j != virtual_0 skips arcs removed from valid_x.
     m.addConstrs((gp.quicksum(
-        chi_kw[k, w] * gp.quicksum(x_ijh[i, j, h] * rho[i, u, k] for j in F_k[k] if j != i)
+        chi_kw[k, w] * gp.quicksum(x_ijh[i, j, h] * rho[i, u, k] for j in F_k[k] if j != i and j != virtual_0)
         for k in K
         for h in H_k[k]
         for i in F_k[k] if i != virtual_0 and i != virtual_n1
@@ -110,9 +110,9 @@ def Constraints(m, sets, x_ijh, y_igamma):
     name="18"
     )
 
-    #20
+    #20 — y_igamma only exists when gamma is a valid departure runway for flight i
     m.addConstrs((gp.quicksum(
-        Alpha_is[i, s] * y_igamma[i, gamma] for i in D) + len(F_s_gamma_A[s, gamma]) <=
+        Alpha_is[i, s] * y_igamma[i, gamma] for i in D if gamma in Lambda_i[i]) + len(F_s_gamma_A[s, gamma]) <=
         mu_sgamma[s, gamma]
         for s in S_r
         for gamma in Lambda),

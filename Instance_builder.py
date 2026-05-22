@@ -12,6 +12,8 @@ def get_case(case_name):
     if case_name == "paper_case_manuel":
         return Paper_case_manuel
     raise ValueError("Unknown case_name")
+
+
 #get weights from probabilities
 def weighted_choice(prob_dict):
     # prob_dict: {"C":0.7, "D":0.2, ...}
@@ -78,8 +80,8 @@ def build_flights(cfg):
     return flights
 
 #First departure 19L
-def routes(): 
-    [[["F1", "T4_1", "T4_2", "D_14", "D_15"], #1
+def routes():
+    return [[["F1", "T4_1", "T4_2", "D_14", "D_15"], #1
     ["F1", "T4_1", "T4_2", "D_14", "D_15", "D_16"], #2
     ["F1", "T4_1", "T4_2", "D_14", "D_15", "D_16", "D_17"], #3
     ["F1", "T4_1", "E_17", "E_18", "J23"], #4
@@ -500,8 +502,8 @@ def populate_sets(instances):
     #virtual source and sink flights
     virtual_0  = "F0"
     virtual_n1 = f"F{n+1}"
-    F[virtual_0]  = Flight(virtual_0,  "F", "passenger", -1,        "convertible", -1,        "convertible", "virtual", 1)
-    F[virtual_n1] = Flight(virtual_n1, "F", "passenger", 24*60+1,   "convertible", 24*60+1,   "convertible", "virtual", 1)
+    F[virtual_0]  = Flight(virtual_0,  "F", "passenger", -1,        "convertible", -1,        "convertible", "virtual", 3)
+    F[virtual_n1] = Flight(virtual_n1, "F", "passenger", 24*60+1,   "convertible", 24*60+1,   "convertible", "virtual", 3)
 
     G = {g.gate_id: g for g in instances["gates"]}
     """
@@ -554,9 +556,12 @@ def populate_sets(instances):
     for k in K:
         F_k[k] += [virtual_0, virtual_n1]
 
-#TODO Determine which runways we want to make available for each flight i   
-    #set of runways available for flight i
-    Lambda_i = {fid: [1, 2, 3, 4] for fid in F}
+    #runway roles: 1=19L dep, 2=20R dep, 3=19R arr, 4=20L arr
+    arrival_runways = {3, 4}
+    departure_runways = [gamma for gamma in Lambda if gamma not in arrival_runways]
+
+    #set of departure runways available for flight i (arrival runways disabled)
+    Lambda_i = {fid: list(departure_runways) for fid in F}
 
     #Boolean parameter, if the gate type k is in apron w , it is 1, and otherwise, it is 0
     chi_kw = {(k, w): 1 if k[3] == w else 0 for k in K for w in W}
@@ -601,11 +606,44 @@ def populate_sets(instances):
 
 
 
-    #Capacity limit of apron w at time u
-    N_w_tau = 5
+    #TODO: Capacity limit of apron w at time u, now set for 30
+    N_w_tau = 30
 
     #Maximum number of flights allowed on the runway during time window s
     mu_sgamma = {(s, gamma): 4 for s in S_r for gamma in Lambda}  #TODO: calibrate per runway
+
+    #taxiway lengths in meters, keyed by taxiway name
+    taxi_lengths_df = pd.read_excel("Taxiway_lengths.xlsx")
+    taxi_lengths = dict(zip(taxi_lengths_df["Taxiway"].astype(str).str.strip(), taxi_lengths_df["Length_(m)"]))
+
+    #average taxi speed in m/min (≈ 10 m/s, ~19 knots)
+    taxi_speed = 600
+
+    #routes()[idx] is the route list for a runway: 1=19L dep, 2=20R dep, 3=19R arr, 4=20L arr
+    route_data = routes()
+    runway_to_idx = {1: 0, 2: 1, 3: 2, 4: 3}
+
+    #taxiing time from arrival runway γ to gate type k for flight i
+    TA = {}
+    for fid in real_flight_ids:
+        gamma = F[fid].arrival_runway
+        if gamma not in runway_to_idx:
+            continue
+        for k in K:
+            corridor = k[4]
+            if 1 <= corridor <= len(route_data[runway_to_idx[gamma]]):
+                route = route_data[runway_to_idx[gamma]][corridor - 1]
+                TA[fid, k, gamma] = sum(taxi_lengths.get(t, 0) for t in route) / taxi_speed
+
+    #taxiing time from gate type k to departure runway γ for flight i
+    TD = {}
+    for fid in real_flight_ids:
+        for k in K:
+            corridor = k[4]
+            for gamma in Lambda_i[fid]:
+                if gamma in runway_to_idx and 1 <= corridor <= len(route_data[runway_to_idx[gamma]]):
+                    route = route_data[runway_to_idx[gamma]][corridor - 1]
+                    TD[fid, k, gamma] = sum(taxi_lengths.get(t, 0) for t in route) / taxi_speed
 
     return {
         "F": F, "G": G, "A": A, "D": D,
@@ -626,6 +664,8 @@ def populate_sets(instances):
         "NE_i": NE_i,
         "FF_i": FF_i,
         "f_i": f_i,
+        "TA": TA,
+        "TD": TD,
         "virtual_0": virtual_0,
         "virtual_n1": virtual_n1,
         "real_flight_ids": real_flight_ids,
