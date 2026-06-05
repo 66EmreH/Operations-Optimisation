@@ -443,18 +443,57 @@ def save_to_excel(flights, gates, filename="instance_data.xlsx"):
 
     print(f"Saved to {filename}")
 
+def load_from_excel(filename="paper_case_manuel_instance_fixed.xlsx"):
+    flights_df = pd.read_excel(filename, sheet_name="Flights")
+    gates_df = pd.read_excel(filename, sheet_name="Gates")
+
+    flights = [
+        Flight(
+            row["flight_id"],
+            row["aircraft_size"],
+            row["entity"],
+            int(row["arrival_time"]),
+            row["arrival_destination"],
+            int(row["departure_time"]),
+            row["departure_destination"],
+            row["airline"],
+            int(row["arrival_runway"]),
+        )
+        for _, row in flights_df.iterrows()
+    ]
+
+    gates = [
+        Gate(
+            row["gate_id"],
+            row["terminal_proximity"],
+            row["gate_size"],
+            row["entity"],
+            row["apron"],
+            int(row["corridor"]),
+        )
+        for _, row in gates_df.iterrows()
+    ]
+
+    return flights, gates
+
 #Main-------------------------------------------------------------
 #Construct the instace
 def build_instance(case_name, seed=None):
-    cfg = get_case(case_name)
+    if case_name == "paper_case_manuel_fixed":
+        cfg = get_case("paper_case_manuel")
+    else:
+        cfg = get_case(case_name)
 
     if seed is None:
         seed = cfg.get("seed", 1)
 
     random.seed(seed)
 
-    flights = build_flights(cfg)
-    gates = build_gates(cfg)
+    if case_name == "paper_case_manuel_fixed":
+        flights, gates = load_from_excel("paper_case_manuel_instance_fixed.xlsx")
+    else:
+        flights = build_flights(cfg)
+        gates = build_gates(cfg)
 
     compat = build_compatibility(flights, gates)
     overlaps = build_overlaps(flights)
