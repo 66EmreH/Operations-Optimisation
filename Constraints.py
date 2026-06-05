@@ -25,19 +25,15 @@ def Constraints(m, sets, x_ijh, y_igamma):
     S_r        = sets["S_r"]
     F_s_gamma_A  = sets["F_s_gamma_A"]
     overlaps_set = sets["overlaps_set"]
-
-    #PLACEHOLDER FOR TESTING EMRE
-    # Approximate parking window from scheduled times (taxiing times TA/TD are zero until calibrated)
-    t_A_ik = {(fid, k): F[fid].arrival_time   for fid in F for k in K}
-    t_D_ik = {(fid, k): F[fid].departure_time for fid in F for k in K}
+    t_A_ik       = sets["t_A_ik"]
+    t_D_ik       = sets["t_D_ik"]
 
     # 1 if flight fid occupies the apron during 30-min window u, else 0
     rho = {
         (fid, u, k): 1 if t_A_ik[fid, k] < u + 30 and t_D_ik[fid, k] > u else 0
         for fid in F for k in K for u in S_w
     }
-    #END PLACEHOLDER 
-    
+
     #13 only one gate selected per arriving flight
     # j != virtual_0 skips arcs removed from valid_x (no incoming arc into source).
     m.addConstrs((gp.quicksum(x_ijh[i, j, h]
@@ -104,7 +100,7 @@ def Constraints(m, sets, x_ijh, y_igamma):
         for k in K
         for h in H_k[k]
         for i in F_k[k] if i != virtual_0 and i != virtual_n1
-        ) <= N_w_tau
+        ) <= N_w_tau[w, u]
         for w in W
         for u in S_w),
     name="18"

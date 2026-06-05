@@ -60,7 +60,6 @@ test_case = {"seed": 1,
 #         "gate_sizes": {"B": 0.05, "C": 0.45, "D": 0.2, "E": 0.25, "F": 0.05}, #Dist of gate sizes
 #         "entities": {"passenger": 0.8, "cargo": 0.20},
 #     },
-
 # }
 
 Paper_case_manuel = {"seed": 1,
@@ -70,7 +69,7 @@ Paper_case_manuel = {"seed": 1,
         "horizon_end": 24 * 60,
 
         "n_flights": 50,
-        "sizes": {"B": 0.02, "C": 0.80, "D": 0.0, "E": 0.17, "F": 0.01},   #Fig. 10 right
+        "sizes": {"B": 0.02, "C": 0.80, "D": 0.05, "E": 0.17, "F": 0.01},   #Fig. 10 right
         "entities": {"passenger": 0.90, "cargo": 0.10},                    #Fig. 10 centre
         "international_share": 0.20,                                       #Fig. 10 left
         "turnaround": {"B": 25, "C": 35, "D": 50, "E": 110, "F": 150},

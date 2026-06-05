@@ -26,7 +26,6 @@ def weighted_choice(prob_dict):
     # fallback if probs don't sum perfectly (due to 0.699999999)
     return list(prob_dict.keys())[-1]
 
-
 #Build flights with combinations based on probability distributions
 def build_flights(cfg):
     flights_cfg = cfg["flights"]
@@ -539,9 +538,6 @@ def populate_sets(instances):
     #Set of arrival flights landing on runway gamma within time window s
     F_s_gamma_A = {(s, gamma): [f.flight_id for f in A.values() if f.arrival_runway == gamma and s <= f.arrival_time < s + 15] for s in S_r for gamma in Lambda}
 
-    #Set of time intervals available between two successive approach flights on runway gamma in time window s, with p in P
-#TODO    #P = {(s, gamma): [f.arrival_time for f in A.values() if f.arrival_runway == gamma and s <= f.arrival_time < s + 15] for s in S_r for gamma in Lambda}
-
     #Set of scheduled departure times within window s
     F_s_D = {s: [f.flight_id for f in D.values() if s <= f.departure_time < s + 15] for s in S_r}
 
@@ -561,29 +557,20 @@ def populate_sets(instances):
     departure_runways = [gamma for gamma in Lambda if gamma not in arrival_runways]
 
     #set of departure runways available for flight i (arrival runways disabled)
-    Lambda_i = {fid: list(departure_runways) for fid in F}
+    Lambda_i = {fid: list(departure_runways) for fid in F if fid not in [virtual_0, virtual_n1]} 
 
     #Boolean parameter, if the gate type k is in apron w , it is 1, and otherwise, it is 0
     chi_kw = {(k, w): 1 if k[3] == w else 0 for k in K for w in W}
 
-    #TODO, seems unnecessary since we don't use Q
-    #Boolean parameter, if the flight i is belong to the airline type q, it is 1, and otherwise, it is 0
-    #eta_iq
-
     #Boolean parameter, if the gate type k belongs to remote gate, it is 1, and otherwise, it is 0
     # k = (terminal_proximity, gate_size, entity, apron, corridor); remote stands use apron="REMOTE"
     l_k = {k: 1 if k[3] == "REMOTE" else 0 for k in K}
-
-    #TODO - currently computed in Constraints.py from flight times; populate here once TA/TD are calibrated
-    #t_A_ik = {} #start of parking time window for flight i at gate type k
-    #t_D_ik = {} #end of parking time window for flight i at gate type k
 
     #TODO: replace with actual values per aircraft type
     engine_data = {"B": (2, 3.0), "C": (2, 6.0), "D": (2, 9.0), "E": (2, 12.0), "F": (4, 15.0)}
     NE_i = {fid: engine_data[F[fid].aircraft_size][0] for fid in real_flight_ids}
     FF_i = {fid: engine_data[F[fid].aircraft_size][1] for fid in real_flight_ids}
     f_i  = {fid: NE_i[fid] * FF_i[fid] for fid in real_flight_ids}
-
 
     #parameter is affected by the gate type k assigned to the flight and the arrival and departure taxiing times
     #rho = {(i,k,u): 1 if t_A_ik in u or t_D_ik in u else 0 for i in F for k in K for u in S_w}
@@ -602,7 +589,7 @@ def populate_sets(instances):
     N_w_tau = 30
 
     #Maximum number of flights allowed on the runway during time window s
-    mu_sgamma = {(s, gamma): 4 for s in S_r for gamma in Lambda}  #TODO: calibrate per runway
+    mu_sgamma = {(s, gamma): 7 for s in S_r for gamma in Lambda}  
 
     #taxiway lengths in meters, keyed by taxiway name
     taxi_lengths_df = pd.read_excel("Taxiway_lengths.xlsx")
@@ -637,6 +624,20 @@ def populate_sets(instances):
                     route = route_data[runway_to_idx[gamma]][corridor - 1]
                     TD[fid, k, gamma] = sum(taxi_lengths.get(t, 0) for t in route) / taxi_speed
 
+    #Parking time windows based on departure and arrival times
+    t_A_ik = {}  # start of parking window for flight i at gate type k
+    t_D_ik = {}  # end of parking window for flight i at gate type k
+    for fid in F:
+        for k in K:
+            if fid in real_flight_ids:
+                ta = TA.get((fid, k, F[fid].arrival_runway), float('inf'))
+                td = min(TD.get((fid, k, gamma), float('inf')) for gamma in Lambda_i[fid])
+            else:
+                ta = 0.0
+                td = 0.0
+            t_A_ik[fid, k] = F[fid].arrival_time + ta
+            t_D_ik[fid, k] = F[fid].departure_time - td
+
     return {
         "F": F, "G": G, "A": A, "D": D,
         "W": W, "K": K, "Lambda": Lambda,
@@ -658,6 +659,8 @@ def populate_sets(instances):
         "f_i": f_i,
         "TA": TA,
         "TD": TD,
+        "t_A_ik": t_A_ik,
+        "t_D_ik": t_D_ik,
         "virtual_0": virtual_0,
         "virtual_n1": virtual_n1,
         "real_flight_ids": real_flight_ids,

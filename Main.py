@@ -6,8 +6,6 @@ from Model import build_model
 #Model parameters to set and possibly change if needed/wanted
 Case = "paper_case_manuel" # "test_case" or "paper_case_manuel"
 
-
-
 #See what instance to use
 if Case == "test_case":
     instance = build_instance("test_case", seed=1)
