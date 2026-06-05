@@ -567,7 +567,7 @@ def populate_sets(instances):
     l_k = {k: 1 if k[3] == "REMOTE" else 0 for k in K}
 
     #TODO: replace with actual values per aircraft type
-    engine_data = {"B": (2, 3.0), "C": (2, 6.0), "D": (2, 9.0), "E": (2, 12.0), "F": (4, 15.0)}
+    engine_data = {"B": (2, 3.5), "C": (2, 6.0), "D": (2, 9.0), "E": (2, 14.0), "F": (4, 12.0)}
     NE_i = {fid: engine_data[F[fid].aircraft_size][0] for fid in real_flight_ids}
     FF_i = {fid: engine_data[F[fid].aircraft_size][1] for fid in real_flight_ids}
     f_i  = {fid: NE_i[fid] * FF_i[fid] for fid in real_flight_ids}
@@ -583,7 +583,16 @@ def populate_sets(instances):
 
     #Time interval treshold between aircraft at a gate
     #TODO, we need to define this, for now we set it to 30 minutes
-    ksi = 30
+    ksi = {}
+    for i in F:
+        if F[i].arrival_destination == "domestic" and F[i].departure_destination == "domestic":
+            ksi[i] = 30
+        else:
+            ksi[i] = 100
+    
+   
+
+
 
     #TODO: Capacity limit of apron w at time u, now set for 30
     N_w_tau = 30
