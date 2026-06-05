@@ -539,8 +539,6 @@ def populate_sets(instances):
     #Set of arrival flights landing on runway gamma within time window s
     F_s_gamma_A = {(s, gamma): [f.flight_id for f in A.values() if f.arrival_runway == gamma and s <= f.arrival_time < s + 15] for s in S_r for gamma in Lambda}
 
-    #Set of time intervals available between two successive approach flights on runway gamma in time window s, with p in P
-#TODO    #P = {(s, gamma): [f.arrival_time for f in A.values() if f.arrival_runway == gamma and s <= f.arrival_time < s + 15] for s in S_r for gamma in Lambda}
 
     #Set of scheduled departure times within window s
     F_s_D = {s: [f.flight_id for f in D.values() if s <= f.departure_time < s + 15] for s in S_r}
@@ -602,7 +600,7 @@ def populate_sets(instances):
     N_w_tau = 30
 
     #Maximum number of flights allowed on the runway during time window s
-    mu_sgamma = {(s, gamma): 4 for s in S_r for gamma in Lambda}  #TODO: calibrate per runway
+    mu_sgamma = {(s, gamma): 7 for s in S_r for gamma in Lambda}  #28 max departures per hour per runway
 
     #taxiway lengths in meters, keyed by taxiway name
     taxi_lengths_df = pd.read_excel("Taxiway_lengths.xlsx")

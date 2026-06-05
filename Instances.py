@@ -67,9 +67,9 @@ Paper_case_manuel = {"seed": 1,
     #Paper Section 5.1 + Fig. 10 distributions; bump n_flights for the paper's medium/large scales.
     "flights": {"mode": "generated",
         "horizon_start": 0,
-        "horizon_end": 24 * 60,
+        "horizon_end": 24 * 60, 
 
-        "n_flights": 50,
+        "n_flights": 1200,
         "sizes": {"B": 0.02, "C": 0.80, "D": 0.0, "E": 0.17, "F": 0.01},   #Fig. 10 right
         "entities": {"passenger": 0.90, "cargo": 0.10},                    #Fig. 10 centre
         "international_share": 0.20,                                       #Fig. 10 left
