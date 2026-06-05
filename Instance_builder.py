@@ -579,7 +579,7 @@ def populate_sets(instances):
     #t_D_ik = {} #end of parking time window for flight i at gate type k
 
     #TODO: replace with actual values per aircraft type
-    engine_data = {"B": (2, 3.0), "C": (2, 6.0), "D": (2, 9.0), "E": (2, 12.0), "F": (4, 15.0)}
+    engine_data = {"B": (2, 3.5), "C": (2, 6.0), "D": (2, 9.0), "E": (2, 14.0), "F": (4, 12.0)}
     NE_i = {fid: engine_data[F[fid].aircraft_size][0] for fid in real_flight_ids}
     FF_i = {fid: engine_data[F[fid].aircraft_size][1] for fid in real_flight_ids}
     f_i  = {fid: NE_i[fid] * FF_i[fid] for fid in real_flight_ids}
@@ -610,7 +610,7 @@ def populate_sets(instances):
     N_w_tau = 30
 
     #Maximum number of flights allowed on the runway during time window s
-    mu_sgamma = {(s, gamma): 4 for s in S_r for gamma in Lambda}  #TODO: calibrate per runway
+    mu_sgamma = {(s, gamma): 7 for s in S_r for gamma in Lambda}  
 
     #taxiway lengths in meters, keyed by taxiway name
     taxi_lengths_df = pd.read_excel("Taxiway_lengths.xlsx")
