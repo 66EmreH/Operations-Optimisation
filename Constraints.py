@@ -59,12 +59,12 @@ def Constraints(m, sets, x_ijh, y_igamma):
 
     #15 gap between consecutive flights at the same gate must meet the threshold ksi
     # i != virtual_n1 and j != virtual_0: skip arcs removed from valid_x.
-    m.addConstrs((t_A_ik[j, k] - t_D_ik[i, k] + M * (1 - x_ijh[i, j, h]) >= ksi
+    m.addConstrs((t_A_ik[j, k] - t_D_ik[i, k] + M * (1 - x_ijh[i, j, h]) >= ksi[i]
         for k in K
         for i in F_k[k] if i != virtual_n1 and i != virtual_0
         for j in F_k[k] if i != j and j != virtual_0 and j != virtual_n1
         for h in H_k[k]
-        if t_A_ik[j, k] - t_D_ik[i, k] < ksi),
+        if t_A_ik[j, k] - t_D_ik[i, k] < ksi[i]),
     name="15"
     )
 

@@ -596,8 +596,9 @@ def populate_sets(instances):
 
     #Time interval treshold between aircraft at a gate
     #TODO, we need to define this, for now we set it to 30 minutes
+    ksi = {}
     for i in F:
-        if arr_dest[i] == "domestic" and dep_dest[i] == "domestic":
+        if F[i].arrival_destination == "domestic" and F[i].departure_destination == "domestic":
             ksi[i] = 30
         else:
             ksi[i] = 100
