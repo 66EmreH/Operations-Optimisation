@@ -582,7 +582,6 @@ def populate_sets(instances):
     e_k = {k: len(H_k[k]) for k in K}
 
     #Time interval treshold between aircraft at a gate
-    #TODO, we need to define this, for now we set it to 30 minutes
     ksi = {}
     for i in F:
         if F[i].arrival_destination == "domestic" and F[i].departure_destination == "domestic":
