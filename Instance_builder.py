@@ -535,11 +535,11 @@ def populate_sets(instances):
     """
 
     real_flight_ids = list(F.keys())
-    n = len(real_flight_ids)
 
     #virtual source and sink flights
+    max_flight_num = max(int(fid[1:]) for fid in real_flight_ids)
     virtual_0  = "F0"
-    virtual_n1 = f"F{n+1}"
+    virtual_n1 = f"F{max_flight_num + 1}"
     F[virtual_0]  = Flight(virtual_0,  "F", "passenger", -1,        "convertible", -1,        "convertible", "virtual", 3)
     F[virtual_n1] = Flight(virtual_n1, "F", "passenger", 24*60+1,   "convertible", 24*60+1,   "convertible", "virtual", 3)
 
@@ -636,7 +636,13 @@ def populate_sets(instances):
     N_w_tau = 30
 
     #Maximum number of flights allowed on the runway during time window s
-    mu_sgamma = {(s, gamma): 7 for s in S_r for gamma in Lambda}  
+    #TODO: placeholder cap raised to avoid spurious infeasibility. Constraint #20 is
+    #currently mis-specified two ways: (a) it caps the FIXED arrivals — should follow
+    #the paper's Eq 21, mu = |F_s_gamma_A[s,gamma]| + departure_capacity, so arrivals
+    #never make it infeasible; and (b) Alpha_is counts a flight at BOTH its arrival and
+    #its departure, over-charging departure-runway slots at arrival time. Replace this
+    #with Eq 21 + a departure-only indicator once real runway capacities are decided.
+    mu_sgamma = {(s, gamma): 1000 for s in S_r for gamma in Lambda}
 
     #taxiway lengths in meters, keyed by taxiway name
     taxi_lengths_df = pd.read_excel("Taxiway_lengths.xlsx")

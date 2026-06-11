@@ -39,7 +39,7 @@ def Constraints(m, sets, x_ijh, y_igamma):
     m.addConstrs((gp.quicksum(x_ijh[i, j, h]
         for k in K if i in F_k[k]
         for h in H_k[k]
-        for j in F_k[k] if j != i and j != virtual_0
+        for j in F_k[k] if j != i and j != virtual_0 and (i, j, h) in x_ijh
         ) == 1
         for i in A),
     name="13"
@@ -60,15 +60,15 @@ def Constraints(m, sets, x_ijh, y_igamma):
         for i in F_k[k] if i != virtual_n1 and i != virtual_0
         for j in F_k[k] if i != j and j != virtual_0 and j != virtual_n1
         for h in H_k[k]
-        if t_A_ik[j, k] - t_D_ik[i, k] < ksi[i]),
+        if (i, j, h) in x_ijh and t_A_ik[j, k] - t_D_ik[i, k] < ksi[i]),
     name="15"
     )
 
     #16 flow conservation: flight i has equally many predecessors and successors at each gate
     # l != virtual_n1 and j != virtual_0 skip arcs removed from valid_x.
     m.addConstrs((
-        gp.quicksum(x_ijh[l, i, h] for l in F_k[k] if l != i and l != virtual_n1) -
-        gp.quicksum(x_ijh[i, j, h] for j in F_k[k] if j != i and j != virtual_0) == 0
+        gp.quicksum(x_ijh[l, i, h] for l in F_k[k] if l != i and l != virtual_n1 and (l, i, h) in x_ijh) -
+        gp.quicksum(x_ijh[i, j, h] for j in F_k[k] if j != i and j != virtual_0 and (i, j, h) in x_ijh) == 0
         for k in K
         for h in H_k[k]
         for i in F_k[k] if i != virtual_0 and i != virtual_n1),
@@ -96,11 +96,11 @@ def Constraints(m, sets, x_ijh, y_igamma):
     #18 apron capacity: total flights parked at apron w during window u <= N_w_tau
     # j != virtual_0 skips arcs removed from valid_x.
     m.addConstrs((gp.quicksum(
-        chi_kw[k, w] * gp.quicksum(x_ijh[i, j, h] * rho[i, u, k] for j in F_k[k] if j != i and j != virtual_0)
+        chi_kw[k, w] * gp.quicksum(x_ijh[i, j, h] * rho[i, u, k] for j in F_k[k] if j != i and j != virtual_0 and (i, j, h) in x_ijh)
         for k in K
         for h in H_k[k]
         for i in F_k[k] if i != virtual_0 and i != virtual_n1
-        ) <= N_w_tau[w, u]
+        ) <= N_w_tau
         for w in W
         for u in S_w),
     name="18"
