@@ -49,8 +49,7 @@ def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_window
             sets = populate_sets(sub_instance)
             m, assignments = build_model(sets, pinned=carried_pins)
 
-            #Record the flights newly decided in this window (carried ones were
-            #already recorded in the window where they first arrived).
+            #Record the flights newly decided in this window (carried ones were already recorded in the window where they first arrived).
             for f in window_flights:
                 if f.flight_id in assignments:
                     results.append({"flight_id": f.flight_id, "gate_id": assignments[f.flight_id]})
@@ -78,7 +77,7 @@ flights = instance["flights"]
 gates = instance["gates"]
 
 #Save the instance data to an Excel file
-if Case != "paper_case_manuel_fixed": #Don't overwrite the fixed instance, which is used for testing and development
+if Case != "paper_case_manuel_fixed": #Don't overwrite the fixed instance, which is used for testing
     save_to_excel(flights, gates, filename=f"{Case}_instance.xlsx")
 
 #Run the model with rolling horizon over WINDOW_MIN-minute windows.

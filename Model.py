@@ -115,7 +115,7 @@ def build_model(sets, pinned=None):
             )
 
      #Setup model for running and testing------------------------------------------
-    m.Params.TimeLimit = 172800  #2 days
+    m.Params.TimeLimit = 28000  
     m.optimize()
 
     #Save results of the model----------------------------------------------------
