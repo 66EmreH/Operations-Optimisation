@@ -16,6 +16,8 @@ def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_window
     carried_pins = {}   #flight_id -> gate_id, occupants held from earlier windows
     results = []        #one row per flight for the whole day
     window_count = 0
+    window_objectives = []   #(label, objective) per solved window
+    total_objective = 0.0
 
     lo = t_start
     while lo <= t_end:
@@ -47,6 +49,12 @@ def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_window
             sets = populate_sets(sub_instance)
             m, assignments = build_model(sets, pinned=carried_pins)
 
+            #Record this window's objective for the final summary.
+            if m.SolCount > 0:
+                label = f"{lo_hour}:{lo_minute:02d}-{hi_hour}:{hi_minute:02d}"
+                window_objectives.append((label, m.ObjVal))
+                total_objective += m.ObjVal
+
             #Record the flights newly decided in this window (carried ones were already recorded in the window where they first arrived).
             for f in window_flights:
                 if f.flight_id in assignments:
@@ -60,6 +68,11 @@ def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_window
 
     pd.DataFrame(results).to_excel("gate_assignment_results.xlsx", index=False)
     print(f"\nRolling horizon done: {len(results)} flights assigned across {window_count} window(s).")
+
+    print("\n=== Final objective values ===")
+    for label, obj in window_objectives:
+        print(f"   Window {label}: {obj:.2f}")
+    print(f"   Total objective across {window_count} window(s): {total_objective:.2f}")
     return results
 
 #See what instance to use

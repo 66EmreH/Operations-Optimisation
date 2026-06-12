@@ -128,7 +128,10 @@ def build_model(sets, pinned=None):
         for (i, j, h), var in x_ijh.items():
             if var.X > 0.5 and i in real_flight_ids_set:
                 assignments[i] = h
-        print(f"Solved window: {len(assignments)} flights assigned.")
+        print(f"Solved window: {len(assignments)} flights assigned. Objective = {m.ObjVal:.2f}")
+        print(f"   taxi (C1)   = {C1 * taxi_loss.getValue():.2f}")
+        print(f"   robust (C2) = {C2 * robust_loss.getValue():.2f}")
+        print(f"   remote (C3) = {C3 * remote_loss.getValue():.2f}")
     else:
         print(f"No feasible solution. Status: {m.Status}")
 
