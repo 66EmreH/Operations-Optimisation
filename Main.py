@@ -2,11 +2,9 @@ from Instance_builder import build_instance, save_to_excel, populate_sets, build
 from Model import build_model
 import pandas as pd
 
-
 #Model parameters to set and possibly change if needed/wanted
 Case = "paper_case_manuel_fixed" # "test_case" or "paper_case_manuel"
 WINDOW_MIN = 240   #Length of each rolling-horizon window in minutes (4 hours)
-
 
 def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_windows=None):
     all_flights = sorted(all_flights, key=lambda f: f.arrival_time)

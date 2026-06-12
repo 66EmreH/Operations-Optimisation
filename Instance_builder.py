@@ -614,8 +614,8 @@ def populate_sets(instances):
     #parameter is affected by the gate type k assigned to the flight and the arrival and departure taxiing times
     #rho = {(i,k,u): 1 if t_A_ik in u or t_D_ik in u else 0 for i in F for k in K for u in S_w}
 
-    #Boolean parameter, 1 if flight i arrives or deperatures in time window s, and otherwise 0
-    Alpha_is = {(i, s): 1 if s <= F[i].arrival_time < s + 15 or s <= F[i].departure_time < s + 15 else 0 for i in real_flight_ids for s in S_r}
+    #Boolean parameter, 1 if flight i deperatures in time window s, and otherwise 0
+    Alpha_is = {(i, s): 1 if s <= F[i].departure_time < s + 15 else 0 for i in real_flight_ids for s in S_r}
 
     #upper limit of number of available gates for gate type k
     e_k = {k: len(H_k[k]) for k in K}
@@ -628,21 +628,11 @@ def populate_sets(instances):
         else:
             ksi[i] = 100
     
-   
-
-
-
     #TODO: Capacity limit of apron w at time u, now set for 30
     N_w_tau = 30
 
     #Maximum number of flights allowed on the runway during time window s
-    #TODO: placeholder cap raised to avoid spurious infeasibility. Constraint #20 is
-    #currently mis-specified two ways: (a) it caps the FIXED arrivals — should follow
-    #the paper's Eq 21, mu = |F_s_gamma_A[s,gamma]| + departure_capacity, so arrivals
-    #never make it infeasible; and (b) Alpha_is counts a flight at BOTH its arrival and
-    #its departure, over-charging departure-runway slots at arrival time. Replace this
-    #with Eq 21 + a departure-only indicator once real runway capacities are decided.
-    mu_sgamma = {(s, gamma): 1000 for s in S_r for gamma in Lambda}
+    mu_sgamma = {(s, gamma): 7 for s in S_r for gamma in Lambda}
 
     #taxiway lengths in meters, keyed by taxiway name
     taxi_lengths_df = pd.read_excel("Taxiway_lengths.xlsx")
