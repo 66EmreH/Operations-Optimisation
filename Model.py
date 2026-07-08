@@ -117,6 +117,9 @@ def build_model(sets, pinned=None):
      #Setup model for running and testing------------------------------------------
     m.Params.TimeLimit = 28000  
     m.optimize()
+    if m.Status == GRB.INF_OR_UNBD:
+        m.Params.DualReductions = 0
+        m.optimize()
 
     #Save results of the model----------------------------------------------------
     #Write the LP file for inspection
@@ -132,6 +135,7 @@ def build_model(sets, pinned=None):
         print(f"   taxi (C1)   = {C1 * taxi_loss.getValue():.2f}")
         print(f"   robust (C2) = {C2 * robust_loss.getValue():.2f}")
         print(f"   remote (C3) = {C3 * remote_loss.getValue():.2f}")
+
     else:
         print(f"No feasible solution. Status: {m.Status}")
 

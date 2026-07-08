@@ -3,10 +3,15 @@ from Model import build_model
 import pandas as pd
 
 #Model parameters to set and possibly change if needed/wanted
-Case = "paper_case_manuel_instance_updated" # "test_case" or "paper_case_manuel"
+Case = "paper_case_manuel_instance_fixed" # "test_case" or "paper_case_manuel"
 WINDOW_MIN = 240   #Length of each rolling-horizon window in minutes (4 hours)
 
 def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_windows=None):
+    if not all_flights:
+        print("No flights to schedule; nothing to do.")
+        return []
+    if window_min <= 0:
+        raise ValueError(f"window_min must be positive, got {window_min}")
     all_flights = sorted(all_flights, key=lambda f: f.arrival_time)
     flight_by_id = {f.flight_id: f for f in all_flights}
 
@@ -25,6 +30,9 @@ def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_window
             break
         hi = lo + window_min
 
+        #Drop pins of flights that already departed (covers empty windows too).
+        carried_pins = {fid: h for fid, h in carried_pins.items()
+                        if flight_by_id[fid].departure_time > lo}
         #Flights arriving in this window, plus carried-over occupants still parked.
         window_flights = [f for f in all_flights if lo <= f.arrival_time < hi]
         carried_flights = [flight_by_id[fid] for fid in carried_pins]
@@ -49,11 +57,18 @@ def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_window
             sets = populate_sets(sub_instance)
             m, assignments = build_model(sets, pinned=carried_pins)
 
-            #Record this window's objective for the final summary.
-            if m.SolCount > 0:
-                label = f"{lo_hour}:{lo_minute:02d}-{hi_hour}:{hi_minute:02d}"
-                window_objectives.append((label, m.ObjVal))
-                total_objective += m.ObjVal
+            label = f"{lo_hour}:{lo_minute:02d}-{hi_hour}:{hi_minute:02d}"
+
+            #No solution in this window: save what we have and stop the whole run.
+            if m.SolCount == 0:
+                pd.DataFrame(results).to_excel("gate_assignment_results.xlsx", index=False)
+                raise SystemExit(
+                    f"ERROR: window {label} produced no solution (Gurobi status {m.Status}). "
+                    f"Stopping. Partial results for {len(results)} flights were saved to "
+                    f"gate_assignment_results.xlsx.")
+
+            window_objectives.append((label, m.ObjVal))
+            total_objective += m.ObjVal
 
             #Record the flights newly decided in this window (carried ones were already recorded in the window where they first arrived).
             for f in window_flights:
@@ -80,8 +95,8 @@ if Case == "test_case":
     instance = build_instance("test_case", seed=1)
 elif Case == "paper_case_manuel":
     instance = build_instance("paper_case_manuel", seed=1)
-elif Case == "paper_case_manuel_fixed":
-    instance = build_instance("paper_case_manuel_fixed", seed=1)
+elif Case == "paper_case_manuel_instance_fixed":
+    instance = build_instance("paper_case_manuel_instance_fixed", seed=1)
 elif Case ==  "paper_case_manuel_instance_updated":
     instance = build_instance("paper_case_manuel_instance_updated", seed=1)
 
@@ -90,7 +105,7 @@ flights = instance["flights"]
 gates = instance["gates"]
 
 #Save the instance data to an Excel file
-if Case != "paper_case_manuel_instance_updated": #Don't overwrite the fixed instance, which is used for testing
+if Case != "paper_case_manuel_instance_fixed": #Don't overwrite the fixed instance, which is used for testing
     save_to_excel(flights, gates, filename=f"{Case}_instance.xlsx")
 
 #Run the model with rolling horizon over WINDOW_MIN-minute windows.
