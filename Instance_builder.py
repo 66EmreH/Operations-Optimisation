@@ -491,6 +491,8 @@ def build_instance(case_name, seed=None):
 
     if case_name == "paper_case_manuel_fixed":
         flights, gates = load_from_excel("paper_case_manuel_instance_fixed.xlsx")
+    if case_name == "paper_case_manuel_instance_updated":
+        flights, gates = load_from_excel("paper_case_manuel_instance_updated.xlsx")
     else:
         flights = build_flights(cfg)
         gates = build_gates(cfg)

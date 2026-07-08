@@ -3,7 +3,7 @@ from Model import build_model
 import pandas as pd
 
 #Model parameters to set and possibly change if needed/wanted
-Case = "paper_case_manuel_fixed" # "test_case" or "paper_case_manuel"
+Case = "paper_case_manuel_instance_updated" # "test_case" or "paper_case_manuel"
 WINDOW_MIN = 240   #Length of each rolling-horizon window in minutes (4 hours)
 
 def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_windows=None):
@@ -82,13 +82,15 @@ elif Case == "paper_case_manuel":
     instance = build_instance("paper_case_manuel", seed=1)
 elif Case == "paper_case_manuel_fixed":
     instance = build_instance("paper_case_manuel_fixed", seed=1)
+elif Case ==  "paper_case_manuel_instance_updated":
+    instance = build_instance("paper_case_manuel_instance_updated", seed=1)
 
 #Populate sets from instances
 flights = instance["flights"]
 gates = instance["gates"]
 
 #Save the instance data to an Excel file
-if Case != "paper_case_manuel_fixed": #Don't overwrite the fixed instance, which is used for testing
+if Case != "paper_case_manuel_instance_updated": #Don't overwrite the fixed instance, which is used for testing
     save_to_excel(flights, gates, filename=f"{Case}_instance.xlsx")
 
 #Run the model with rolling horizon over WINDOW_MIN-minute windows.
