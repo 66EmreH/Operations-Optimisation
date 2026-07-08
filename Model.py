@@ -127,11 +127,27 @@ def build_model(sets, pinned=None):
 
     #Map each real flight to the gate it was assigned (its single outgoing arc).
     assignments = {}
+    window_obj = 0.0
     if m.SolCount > 0:
         for (i, j, h), var in x_ijh.items():
             if var.X > 0.5 and i in real_flight_ids_set:
                 assignments[i] = h
-        print(f"Solved window: {len(assignments)} flights assigned. Objective = {m.ObjVal:.2f}")
+
+        #Taxi and remote costs of pinned (carried-over) flights were already
+        #counted in the window where they first arrived; subtract them so each
+        #flight is counted once in the rolling-horizon total. Robust pair terms
+        #need no correction: two pinned flights can never be consecutive at the
+        #same gate, so every pair involves a newly decided flight.
+        pinned_cost = 0.0
+        for i, h in (pinned or {}).items():
+            if i in assignments:
+                k = gate_to_k[h]
+                if i in f_i:
+                    pinned_cost += C1 * f_i[i] * T_ki[i, k].getValue()
+                pinned_cost += C3 * l_k[k]
+        window_obj = m.ObjVal - pinned_cost
+
+        print(f"Solved window: {len(assignments)} flights assigned. Objective = {m.ObjVal:.2f} (excl. carried-over flights: {window_obj:.2f})")
         print(f"   taxi (C1)   = {C1 * taxi_loss.getValue():.2f}")
         print(f"   robust (C2) = {C2 * robust_loss.getValue():.2f}")
         print(f"   remote (C3) = {C3 * remote_loss.getValue():.2f}")
@@ -139,4 +155,4 @@ def build_model(sets, pinned=None):
     else:
         print(f"No feasible solution. Status: {m.Status}")
 
-    return m, assignments
+    return m, assignments, window_obj

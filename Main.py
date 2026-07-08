@@ -3,7 +3,7 @@ from Model import build_model
 import pandas as pd
 
 #Model parameters to set and possibly change if needed/wanted
-Case = "paper_case_manuel_instance_fixed" # "test_case" or "paper_case_manuel"
+Case = "paper_case_manuel_fixed" # "test_case" or "paper_case_manuel"
 WINDOW_MIN = 240   #Length of each rolling-horizon window in minutes (4 hours)
 
 def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_windows=None):
@@ -55,7 +55,7 @@ def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_window
                 "overlaps": build_overlaps(sub_flights),
             }
             sets = populate_sets(sub_instance)
-            m, assignments = build_model(sets, pinned=carried_pins)
+            m, assignments, window_obj = build_model(sets, pinned=carried_pins)
 
             label = f"{lo_hour}:{lo_minute:02d}-{hi_hour}:{hi_minute:02d}"
 
@@ -67,8 +67,9 @@ def solve_rolling_horizon(all_flights, gates, case, seed, window_min, max_window
                     f"Stopping. Partial results for {len(results)} flights were saved to "
                     f"gate_assignment_results.xlsx.")
 
-            window_objectives.append((label, m.ObjVal))
-            total_objective += m.ObjVal
+            #Objective counting each flight only in the window it was first assigned.
+            window_objectives.append((label, window_obj))
+            total_objective += window_obj
 
             #Record the flights newly decided in this window (carried ones were already recorded in the window where they first arrived).
             for f in window_flights:
@@ -95,8 +96,8 @@ if Case == "test_case":
     instance = build_instance("test_case", seed=1)
 elif Case == "paper_case_manuel":
     instance = build_instance("paper_case_manuel", seed=1)
-elif Case == "paper_case_manuel_instance_fixed":
-    instance = build_instance("paper_case_manuel_instance_fixed", seed=1)
+elif Case == "paper_case_manuel_fixed":
+    instance = build_instance("paper_case_manuel_fixed", seed=1)
 elif Case ==  "paper_case_manuel_instance_updated":
     instance = build_instance("paper_case_manuel_instance_updated", seed=1)
 
@@ -105,7 +106,7 @@ flights = instance["flights"]
 gates = instance["gates"]
 
 #Save the instance data to an Excel file
-if Case != "paper_case_manuel_instance_fixed": #Don't overwrite the fixed instance, which is used for testing
+if Case != "paper_case_manuel_fixed": #Don't overwrite the fixed instance, which is used for testing
     save_to_excel(flights, gates, filename=f"{Case}_instance.xlsx")
 
 #Run the model with rolling horizon over WINDOW_MIN-minute windows.

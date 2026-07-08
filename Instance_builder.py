@@ -479,7 +479,7 @@ def load_from_excel(filename="paper_case_manuel_instance_fixed.xlsx"):
 #Main-------------------------------------------------------------
 #Construct the instace
 def build_instance(case_name, seed=None):
-    if case_name == "paper_case_manuel":
+    if case_name in ("paper_case_manuel_fixed", "paper_case_manuel_instance_updated"):
         cfg = get_case("paper_case_manuel")
     else:
         cfg = get_case(case_name)
