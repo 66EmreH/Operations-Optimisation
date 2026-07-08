@@ -108,7 +108,7 @@ def Constraints(m, sets, x_ijh, y_igamma):
 
     #20 — y_igamma only exists when gamma is a valid departure runway for flight i
     m.addConstrs((gp.quicksum(
-        Alpha_is[i, s] * y_igamma[i, gamma] for i in D if gamma in Lambda_i[i]) + len(F_s_gamma_A[s, gamma]) <=
+        Alpha_is[i, s] * y_igamma[i, gamma] for i in D if gamma in Lambda_i[i]) <=
         mu_sgamma[s, gamma]
         for s in S_r
         for gamma in Lambda),
